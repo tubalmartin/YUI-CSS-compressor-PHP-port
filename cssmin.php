@@ -343,7 +343,8 @@ class CSSmin
     
     /** 
      * PHP port of Javascript's "slice" function
-     * Author: Tubal Martin http://margenn.com 
+     * Author: Tubal Martin http://margenn.com
+     * Tests: http://margenn.com/tubal/str_slice/
      *
      * @param string $str
      * @param int    $start index
