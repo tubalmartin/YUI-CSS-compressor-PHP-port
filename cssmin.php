@@ -357,16 +357,13 @@ class CSSmin
         if ($start >= 0 && $end > 0){
             $l = $end - $start;
         }
-        
-        if ($start >= 0 && $end < 0){
+        else if ($start >= 0 && $end < 0){
             $l = strlen(substr($str, $start)) - abs($end);
         }
-        
-        if ($start < 0 && $end < 0){
+        else if ($start < 0 && $end < 0){
             $l = abs($start) - abs($end);
         }
-        
-        if ($start < 0 && $end > 0){
+        else if ($start < 0 && $end > 0){
             $l = strlen(substr($str, $start)) - strlen(substr($str, $end));
         }
         
