@@ -9,7 +9,8 @@
  * of the cssmin utility by Isaac Schlueter - http://foohack.com/ 
  * Permission is hereby granted to use the PHP version under the same
  * conditions as the YUICompressor (original YUICompressor note below).
- * This port is based on rev 100644 of cssmin.js
+ * This port is based on the following rev:
+ * https://github.com/yui/yuicompressor/blob/83b2be2d4e98834de96bf3ee268c79e61ad9afa3/ports/js/cssmin.js
  */
  
 /*
@@ -25,7 +26,6 @@ class CSSmin
     
     private $comments          = array();
     private $preserved_tokens  = array();
-    
     
     
     public function run($css, $linebreakpos = 100)
