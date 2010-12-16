@@ -352,11 +352,11 @@ class CSSmin
      */
     private function str_slice($str, $start, $end = FALSE)
     {
-        $slice = substr($str, $start);  
-    
         if ($end === 0) {
             return '';
         }
+        
+        $slice = substr($str, $start);  
         
         if ($start >= 0) {
             $l = ($end > 0) ? $end - $start : strlen($slice) - abs($end);   
