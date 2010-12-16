@@ -352,26 +352,39 @@ class CSSmin
      */
     private function str_slice($str, $start, $end = FALSE)
     {
-        if ($end === 0) {
+        if ($end === 0 || $start === $end) {
             return '';
         }
         
-        $slice = substr($str, $start);  
+        $max = strlen($str);
         
-        if ($start >= 0) {
-            $l = ($end > 0) ? $end - $start : strlen($slice) - abs($end);   
-        }
-        else {
-            $l = ($end > 0) ? strlen($slice) - strlen(substr($str, $end)) : abs($start) - abs($end);    
+        if ($start < 0) {
+            $start = $max + $start;
+            if ($start < 0) {
+                return '';
+            }
         }
         
-        if ($l <= 0) {
+        if ($end === FALSE) {
+            $slice = substr($str, $start);
+            return ($slice === FALSE) ? '' : $slice;
+        }
+        
+        if ($end < 0) {
+            $end = $max + $end;
+            if ($end < 0) {
+                return '';
+            }
+        }
+        
+        if ($end <= $start) {
             return '';
         }
-        else {
-            $slice = substr($slice, 0, $l);
+        else if ($end > $start) {
+            $end = $end - $start;
         }
         
+        $slice = substr($str, $start, $end);
         return ($slice === FALSE) ? '' : $slice;
     }
 
