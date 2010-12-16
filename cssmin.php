@@ -352,6 +352,11 @@ class CSSmin
      */
     private function str_slice($str, $start, $end = FALSE)
     {
+        if ($end === FALSE) {
+            $slice = substr($str, $start);
+            return ($slice === FALSE) ? '' : $slice;
+        }
+        
         if ($end === 0 || $start === $end) {
             return '';
         }
@@ -359,20 +364,13 @@ class CSSmin
         $max = strlen($str);
         
         if ($start < 0) {
-            $start = $max + $start;
-            if ($start < 0) {
+            if (($start = $max + $start) < 0) {
                 return '';
             }
         }
-        
-        if ($end === FALSE) {
-            $slice = substr($str, $start);
-            return ($slice === FALSE) ? '' : $slice;
-        }
-        
+    
         if ($end < 0) {
-            $end = $max + $end;
-            if ($end < 0) {
+            if (($end = $max + $end) < 0) {
                 return '';
             }
         }
@@ -380,24 +378,10 @@ class CSSmin
         if ($end <= $start) {
             return '';
         }
-        else if ($end > $start) {
-            $end = $end - $start;
-        }
         
-        $slice = substr($str, $start, $end);
+        $slice = substr($str, $start, $end - $start);
         return ($slice === FALSE) ? '' : $slice;
     }
 
-            
-    
+
 }
-
-
-
-
-
-
-
-
-
-
