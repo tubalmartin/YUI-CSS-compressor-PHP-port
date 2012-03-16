@@ -25,7 +25,7 @@ class CSSmin
 {
     private $comments;
     private $preserved_tokens;
-	private $raise_php_limits;
+    private $raise_php_limits;
 
     /**
      * @param bool|int $raise_php_limits if true, raise_php_settings_limits() will
@@ -48,7 +48,7 @@ class CSSmin
             $this->raise_php_settings_limits();
         }
 
-		$this->comments = array();
+        $this->comments = array();
         $this->preserved_tokens = array();
 
         $start_index = 0;
