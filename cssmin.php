@@ -25,15 +25,25 @@ class CSSmin
 {
     private $comments;
     private $preserved_tokens;
-    private $raise_php_limits;
+	private $memory_limit;
+	private $max_execution_time;
+	private $pcre_backtrack_limit;
+	private $pcre_recursion_limit;
+	private $raise_php_limits;
 
     /**
-     * @param bool|int $raise_php_limits if true, raise_php_settings_limits() will
-     * be called.
+     * @param bool|int $raise_php_limits
+	 * If true, PHP settings will be raised if needed
      */
     public function __construct($raise_php_limits = TRUE)
     {
-        $this->raise_php_limits = (bool) $raise_php_limits;
+        // Set suggested PHP limits
+		$this->memory_limit = 128 * 1048576; // 128MB in bytes
+		$this->max_execution_time = 60; // 1 min
+		$this->pcre_backtrack_limit = 1000 * 1000;
+		$this->pcre_recursion_limit =  500 * 1000;
+
+		$this->raise_php_limits = (bool) $raise_php_limits;
     }
 
     /**
@@ -44,11 +54,11 @@ class CSSmin
      */
     public function run($css, $linebreak_pos = FALSE)
     {
-        if ($this->raise_php_limits === TRUE) {
-            $this->raise_php_settings_limits();
-        }
+        if ($this->raise_php_limits) {
+			$this->do_raise_php_limits();
+		}
 
-        $this->comments = array();
+		$this->comments = array();
         $this->preserved_tokens = array();
 
         $start_index = 0;
@@ -127,34 +137,63 @@ class CSSmin
         return implode('', $css_chunks);
     }
 
-    /**
-     * Get the minimum PHP setting values suggested for CSSmin
-     * @return array
+	/**
+     * Sets the memory limit for this script
+     * @param int|string $limit
      */
-    public function get_suggested_php_limits()
+    public function set_memory_limit($limit)
     {
-        return array(
-            'memory_limit' => '128M',
-            'pcre.backtrack_limit' => 1000 * 1000,
-            'pcre.recursion_limit' =>  500 * 1000,
-        );
+        $this->memory_limit = $this->normalize_int($limit);
     }
 
-    /**
-     * Configure PHP to use at least the suggested minimum settings
-     *
-     * @todo Move this functionality to separate class?.
+	/**
+     * Sets the maximum execution time for this script
+     * @param int|string $seconds
      */
-    public function raise_php_settings_limits()
+    public function set_max_execution_time($seconds)
     {
-        foreach ($this->get_suggested_php_limits() as $key => $val) {
-            $current = $this->normalize_int(ini_get($key));
-            $suggested = $this->normalize_int($val);
-            if ($current < $suggested) {
-                ini_set($key, $val);
-            }
-        }
+        $this->max_execution_time = (int) $seconds;
     }
+
+	/**
+     * Sets the PCRE backtrack limit for this script
+     * @param int $limit
+     */
+    public function set_pcre_backtrack_limit($limit)
+    {
+        $this->pcre_backtrack_limit = (int) $limit;
+    }
+
+	/**
+     * Sets the PCRE recursion limit for this script
+     * @param int $limit
+     */
+    public function set_pcre_recursion_limit($limit)
+    {
+        $this->pcre_recursion_limit = (int) $limit;
+    }
+
+	/**
+	 * Try to configure PHP to use at least the suggested minimum settings
+	 */
+	private function do_raise_php_limits()
+	{
+		$php_limits = array(
+			'memory_limit' => $this->memory_limit,
+			'max_execution_time' => $this->max_execution_time,
+			'pcre.backtrack_limit' => $this->pcre_backtrack_limit,
+			'pcre.recursion_limit' =>  $this->pcre_recursion_limit
+		);
+
+		// If current settings are higher respect them.
+		foreach ($php_limits as $name => $suggested) {
+			$current = $this->normalize_int(ini_get($name));
+			// memory_limit exception: allow -1 for "no memory limit".
+			if ($current > -1 && ($suggested == -1 || $current < $suggested)) {
+				ini_set($name, $suggested);
+			}
+		}
+	}
 
     /**
      * Does bulk of the minification
@@ -559,7 +598,7 @@ class CSSmin
     }
 
     /**
-     * Convert strings like "64M" to int values
+     * Convert strings like "64M" or "30" to int values
      * @param mixed $size
      * @return int
      */
@@ -567,12 +606,12 @@ class CSSmin
     {
         if (is_string($size)) {
             switch (substr($size, -1)) {
-                case 'M': case 'm': return (int) $size * 1048576;
-                case 'K': case 'k': return (int) $size * 1024;
-                case 'G': case 'g': return (int) $size * 1073741824;
-                default: return (int) $size;
+                case 'M': case 'm': return $size * 1048576;
+                case 'K': case 'k': return $size * 1024;
+                case 'G': case 'g': return $size * 1073741824;
             }
         }
+
         return (int) $size;
     }
 }
