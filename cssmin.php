@@ -25,25 +25,25 @@ class CSSmin
 {
     private $comments;
     private $preserved_tokens;
-	private $memory_limit;
-	private $max_execution_time;
-	private $pcre_backtrack_limit;
-	private $pcre_recursion_limit;
-	private $raise_php_limits;
+    private $memory_limit;
+    private $max_execution_time;
+    private $pcre_backtrack_limit;
+    private $pcre_recursion_limit;
+    private $raise_php_limits;
 
     /**
      * @param bool|int $raise_php_limits
-	 * If true, PHP settings will be raised if needed
+     * If true, PHP settings will be raised if needed
      */
     public function __construct($raise_php_limits = TRUE)
     {
         // Set suggested PHP limits
-		$this->memory_limit = 128 * 1048576; // 128MB in bytes
-		$this->max_execution_time = 60; // 1 min
-		$this->pcre_backtrack_limit = 1000 * 1000;
-		$this->pcre_recursion_limit =  500 * 1000;
+        $this->memory_limit = 128 * 1048576; // 128MB in bytes
+        $this->max_execution_time = 60; // 1 min
+        $this->pcre_backtrack_limit = 1000 * 1000;
+        $this->pcre_recursion_limit =  500 * 1000;
 
-		$this->raise_php_limits = (bool) $raise_php_limits;
+        $this->raise_php_limits = (bool) $raise_php_limits;
     }
 
     /**
@@ -55,10 +55,10 @@ class CSSmin
     public function run($css, $linebreak_pos = FALSE)
     {
         if ($this->raise_php_limits) {
-			$this->do_raise_php_limits();
-		}
+            $this->do_raise_php_limits();
+        }
 
-		$this->comments = array();
+        $this->comments = array();
         $this->preserved_tokens = array();
 
         $start_index = 0;
@@ -137,7 +137,7 @@ class CSSmin
         return implode('', $css_chunks);
     }
 
-	/**
+    /**
      * Sets the memory limit for this script
      * @param int|string $limit
      */
@@ -146,7 +146,7 @@ class CSSmin
         $this->memory_limit = $this->normalize_int($limit);
     }
 
-	/**
+    /**
      * Sets the maximum execution time for this script
      * @param int|string $seconds
      */
@@ -155,7 +155,7 @@ class CSSmin
         $this->max_execution_time = (int) $seconds;
     }
 
-	/**
+    /**
      * Sets the PCRE backtrack limit for this script
      * @param int $limit
      */
@@ -164,7 +164,7 @@ class CSSmin
         $this->pcre_backtrack_limit = (int) $limit;
     }
 
-	/**
+    /**
      * Sets the PCRE recursion limit for this script
      * @param int $limit
      */
@@ -173,27 +173,27 @@ class CSSmin
         $this->pcre_recursion_limit = (int) $limit;
     }
 
-	/**
-	 * Try to configure PHP to use at least the suggested minimum settings
-	 */
-	private function do_raise_php_limits()
-	{
-		$php_limits = array(
-			'memory_limit' => $this->memory_limit,
-			'max_execution_time' => $this->max_execution_time,
-			'pcre.backtrack_limit' => $this->pcre_backtrack_limit,
-			'pcre.recursion_limit' =>  $this->pcre_recursion_limit
-		);
+    /**
+     * Try to configure PHP to use at least the suggested minimum settings
+     */
+    private function do_raise_php_limits()
+    {
+        $php_limits = array(
+            'memory_limit' => $this->memory_limit,
+            'max_execution_time' => $this->max_execution_time,
+            'pcre.backtrack_limit' => $this->pcre_backtrack_limit,
+            'pcre.recursion_limit' =>  $this->pcre_recursion_limit
+        );
 
-		// If current settings are higher respect them.
-		foreach ($php_limits as $name => $suggested) {
-			$current = $this->normalize_int(ini_get($name));
-			// memory_limit exception: allow -1 for "no memory limit".
-			if ($current > -1 && ($suggested == -1 || $current < $suggested)) {
-				ini_set($name, $suggested);
-			}
-		}
-	}
+        // If current settings are higher respect them.
+        foreach ($php_limits as $name => $suggested) {
+            $current = $this->normalize_int(ini_get($name));
+            // memory_limit exception: allow -1 for "no memory limit".
+            if ($current > -1 && ($suggested == -1 || $current < $suggested)) {
+                ini_set($name, $suggested);
+            }
+        }
+    }
 
     /**
      * Does bulk of the minification
