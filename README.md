@@ -58,7 +58,7 @@ If TRUE, CSSmin will try to raise the values of some php configuration options.
 Set to FALSE to keep the values of your php configuration options.
 Defaults to TRUE.
 
-### run(string $css [, int *$linebreak_pos* ])
+### run(string *$css* [, int *$linebreak_pos* ])
 
 **Description**
 
@@ -82,7 +82,7 @@ Defaults to FALSE (1 long line).
 
 A string of compressed CSS code or an empty string if no string is passed.
 
-### set_memory_limit(mixed $limit)
+### set_memory_limit(mixed *$limit*)
 
 **Description**
 
@@ -96,7 +96,7 @@ CSSmin default value: `128M`
 
 Values & notes: [memory_limit documentation](http://php.net/manual/en/ini.core.php#ini.memory-limit)
 
-### set_max_execution_time(int $seconds)
+### set_max_execution_time(int *$seconds*)
 
 **Description**
 
@@ -110,7 +110,7 @@ CSSmin default value: `60`
 
 Values & notes: [max_execution_time documentation](http://php.net/manual/en/info.configuration.php#ini.max-execution-time)
 
-### set_pcre_backtrack_limit(int $limit)
+### set_pcre_backtrack_limit(int *$limit*)
 
 **Description**
 
@@ -124,7 +124,7 @@ CSSmin default value: `1000000`
 
 Values & notes: [pcre.backtrack_limit documentation](http://php.net/manual/en/pcre.configuration.php#ini.pcre.backtrack-limit)
 
-### set_pcre_recursion_limit(int $limit)
+### set_pcre_recursion_limit(int *$limit*)
 
 **Description**
 
