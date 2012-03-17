@@ -52,8 +52,12 @@ class CSSmin
      * @param int|bool $linebreak_pos
      * @return string
      */
-    public function run($css, $linebreak_pos = FALSE)
+    public function run($css = '', $linebreak_pos = FALSE)
     {
+        if (empty($css)) {
+            return '';
+        }
+
         if ($this->raise_php_limits) {
             $this->do_raise_php_limits();
         }
