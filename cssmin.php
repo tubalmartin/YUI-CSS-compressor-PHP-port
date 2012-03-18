@@ -86,10 +86,11 @@ class CSSmin
 
 
         // Let's divide css code in chunks of 25.000 chars aprox.
-        // Reason: PHP's PCRE functions like preg_replace have a "backtrack limit" of 100.000 chars by default (php < 5.3.7)
-        // so if we're dealing with really long strings and a (sub)pattern matches a number of chars greater than
-        // the backtrack limit number (i.e. /(.*)/s) PCRE functions may fail silently returning NULL and
-        // $css would be empty.
+        // Reason: PHP's PCRE functions like preg_replace have a "backtrack limit"
+        // of 100.000 chars by default (php < 5.3.7) so if we're dealing with really
+        // long strings and a (sub)pattern matches a number of chars greater than
+        // the backtrack limit number (i.e. /(.*)/s) PCRE functions may fail silently
+        // returning NULL and $css would be empty.
         $charset = '';
         $charset_regexp = '/@charset [^;]+;/i';
         $css_chunks = array();
@@ -127,15 +128,15 @@ class CSSmin
         // Minify each chunk
         for ($i = 0, $n = count($css_chunks); $i < $n; $i++) {
             $css_chunks[$i] = $this->minify($css_chunks[$i], $linebreak_pos);
-            // If there is a @charset in a css chunk...
+            // Keep the first @charset at-rule found
             if (empty($charset) && preg_match($charset_regexp, $css_chunks[$i], $matches)) {
-                // delete all of them no matter the chunk
-                $css_chunks[$i] = preg_replace($charset_regexp, '', $css_chunks[$i]);
                 $charset = $matches[0];
             }
+            // Delete all @charset at-rules
+            $css_chunks[$i] = preg_replace($charset_regexp, '', $css_chunks[$i]);
         }
 
-        // Update the first chunk and put the charset to the top of the file.
+        // Update the first chunk and push the charset to the top of the file.
         $css_chunks[0] = $charset . $css_chunks[0];
 
         return implode('', $css_chunks);
