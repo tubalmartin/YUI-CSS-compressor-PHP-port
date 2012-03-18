@@ -291,7 +291,7 @@ class CSSmin
 
         // Replace background-position:0; with background-position:0 0;
         // same for transform-origin
-        $css = preg_replace_callback('/(background\-position|transform\-origin|webkit\-transform\-origin|moz\-transform\-origin|o-transform\-origin|ms\-transform\-origin)\:0(;|\})/i', array($this, 'callback_three'), $css);
+        $css = preg_replace_callback('/(background\-position|(?:webkit|moz|o|ms|)\-?transform\-origin)\:0(;|\})/i', array($this, 'callback_three'), $css);
 
         // Replace 0.6 to .6, but only when preceded by : or a white-space
         $css = preg_replace('/(\:|\s)0+\.(\d+)/', '$1.$2', $css);
@@ -304,7 +304,7 @@ class CSSmin
         $css = $this->compress_hex_colors($css);
 
         // border: none -> border:0
-        $css = preg_replace_callback('/(border|border\-top|border\-right|border\-bottom|border\-right|outline|background)\:none(;|\})/i', array($this, 'callback_five'), $css);
+        $css = preg_replace_callback('/(border\-?(?:top|right|bottom|left|)|outline|background)\:none(;|\})/i', array($this, 'callback_five'), $css);
 
         // shorter opacity IE filter
         $css = preg_replace('/progid\:DXImageTransform\.Microsoft\.Alpha\(Opacity\=/i', 'alpha(opacity=', $css);
