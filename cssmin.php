@@ -23,6 +23,10 @@
 
 class CSSmin
 {
+    const TOKEN = '___YUICSSMIN_PRESERVED_TOKEN_';
+    const COMMENT = '___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_';
+    const CLASSCOLON = '___YUICSSMIN_PSEUDOCLASSCOLON___';
+
     private $comments;
     private $preserved_tokens;
     private $memory_limit;
@@ -77,7 +81,7 @@ class CSSmin
                 $end_index = $length;
             }
             $this->comments[] = $this->str_slice($css, $start_index + 2, $end_index);
-            $css = $this->str_slice($css, 0, $start_index + 2) . '___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_' . (count($this->comments) - 1) . '___' . $this->str_slice($css, $end_index);
+            $css = $this->str_slice($css, 0, $start_index + 2) . self::COMMENT . (count($this->comments) - 1) . '___' . $this->str_slice($css, $end_index);
             $start_index += 2;
         }
 
@@ -212,13 +216,13 @@ class CSSmin
         for ($i = 0, $max = count($this->comments); $i < $max; $i++) {
 
             $token = $this->comments[$i];
-            $placeholder = '/___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_' . $i . '___/';
+            $placeholder = '/' . self::COMMENT . $i . '___/';
 
             // ! in the first position of the comment means preserve
             // so push to the preserved tokens keeping the !
             if (substr($token, 0, 1) === '!') {
                 $this->preserved_tokens[] = $token;
-                $css = preg_replace($placeholder, '___YUICSSMIN_PRESERVED_TOKEN_' . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                $css = preg_replace($placeholder, self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
                 continue;
             }
 
@@ -226,10 +230,10 @@ class CSSmin
             // shorten that to /*\*/ and the next one to /**/
             if (substr($token, (strlen($token) - 1), 1) === '\\') {
                 $this->preserved_tokens[] = '\\';
-                $css = preg_replace($placeholder,  '___YUICSSMIN_PRESERVED_TOKEN_' . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                $css = preg_replace($placeholder,  self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
                 $i = $i + 1; // attn: advancing the loop
                 $this->preserved_tokens[] = '';
-                $css = preg_replace('/___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_' . $i . '___/',  '___YUICSSMIN_PRESERVED_TOKEN_' . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                $css = preg_replace('/' . self::COMMENT . $i . '___/',  self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
                 continue;
             }
 
@@ -240,7 +244,7 @@ class CSSmin
                 if ($start_index > 2) {
                     if (substr($css, $start_index - 3, 1) === '>') {
                         $this->preserved_tokens[] = '';
-                        $css = preg_replace($placeholder,  '___YUICSSMIN_PRESERVED_TOKEN_' . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                        $css = preg_replace($placeholder,  self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
                     }
                 }
             }
@@ -259,7 +263,7 @@ class CSSmin
         $css = preg_replace_callback('/(?:^|\})(?:(?:[^\{\:])+\:)+(?:[^\{]*\{)/', array($this, 'callback_two'), $css);
 
         $css = preg_replace('/\s+([\!\{\}\;\:\>\+\(\)\],])/', '$1', $css);
-        $css = preg_replace('/___YUICSSMIN_PSEUDOCLASSCOLON___/', ':', $css);
+        $css = preg_replace('/' . self::CLASSCOLON . '/', ':', $css);
 
         // retain space for special IE6 cases
         $css = preg_replace('/\:first\-(line|letter)(\{|,)/', ':first-$1 $2', $css);
@@ -329,7 +333,7 @@ class CSSmin
 
         // restore preserved comments and strings
         for ($i = 0, $max = count($this->preserved_tokens); $i < $max; $i++) {
-            $css = preg_replace('/___YUICSSMIN_PRESERVED_TOKEN_' . $i . '___/', $this->preserved_tokens[$i], $css, 1);
+            $css = preg_replace('/' . self::TOKEN . $i . '___/', $this->preserved_tokens[$i], $css, 1);
         }
 
         // Trim the final string (for any leading or trailing white spaces)
@@ -391,7 +395,7 @@ class CSSmin
                 $token = preg_replace('/\s+/', '', $token);
                 $this->preserved_tokens[] = $token;
 
-                $preserver = 'url(___YUICSSMIN_PRESERVED_TOKEN_' . (count($this->preserved_tokens) - 1) . '___)';
+                $preserver = 'url(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___)';
                 $sb[] = $preserver;
 
                 $append_index = $end_index + 1;
@@ -474,9 +478,9 @@ class CSSmin
 
         // maybe the string contains a comment-like substring?
         // one, maybe more? put'em back then
-        if (($pos = $this->index_of($match, '___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_')) >= 0) {
+        if (($pos = $this->index_of($match, self::COMMENT)) >= 0) {
             for ($i = 0, $max = count($this->comments); $i < $max; $i++) {
-                $match = preg_replace('/___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_' . $i . '___/', $this->comments[$i], $match, 1);
+                $match = preg_replace('/' . self::COMMENT . $i . '___/', $this->comments[$i], $match, 1);
             }
         }
 
@@ -484,12 +488,12 @@ class CSSmin
         $match = preg_replace('/progid\:DXImageTransform\.Microsoft\.Alpha\(Opacity\=/i', 'alpha(opacity=', $match);
 
         $this->preserved_tokens[] = $match;
-        return $quote . '___YUICSSMIN_PRESERVED_TOKEN_' . (count($this->preserved_tokens) - 1) . '___' . $quote;
+        return $quote . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . $quote;
     }
 
     private function callback_two($matches)
     {
-        return preg_replace('/\:/', '___YUICSSMIN_PSEUDOCLASSCOLON___', $matches[0]);
+        return preg_replace('/\:/', self::CLASSCOLON, $matches[0]);
     }
 
     private function callback_three($matches)
