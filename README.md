@@ -57,7 +57,7 @@ Bugs fixed in this port but present in YUI compressor:
 How to run the test suite:
 
 * You need a server with PHP installed.
-* Open your browser and navigate to the file `run_tests.php`.
+* Open your browser and navigate to the file `tests/run.php`.
 
 ## API methods
 
