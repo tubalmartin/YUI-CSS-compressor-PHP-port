@@ -80,9 +80,11 @@ class CSSmin
             if ($end_index < 0) {
                 $end_index = $length;
             }
-            $this->comments[] = $this->str_slice($css, $start_index + 2, $end_index);
-            $css = $this->str_slice($css, 0, $start_index + 2) . self::COMMENT . (count($this->comments) - 1) . '___' . $this->str_slice($css, $end_index);
-            $start_index += 2;
+			$comment_found = $this->str_slice($css, $start_index + 2, $end_index);
+            $this->comments[] = $comment_found;
+			$comment_preserve_string = self::COMMENT . (count($this->comments) - 1) . '___';
+			$css = $this->str_slice($css, 0, $start_index + 2) . $comment_preserve_string . $this->str_slice($css, $end_index);
+            $start_index = $end_index + 2 + strlen($comment_preserve_string) - strlen($comment_found);
         }
 
         // preserve strings so their content doesn't get accidentally minified

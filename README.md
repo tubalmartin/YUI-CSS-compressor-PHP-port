@@ -1,6 +1,6 @@
 # A PHP port of the YUI CSS compressor
 
-## Who's using it?
+## Who uses this port?
 
 * [Minify](https://github.com/mrclay/minify)
 
@@ -41,6 +41,21 @@ $output_css2 = $compressor->run($input_css2, 2000);
 // Do whatever you need with the compressed CSS code
 echo $output_css1 . $output_css2;
 ```
+
+## Some Notes
+
+This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the compressor "cssmin.js".
+
+Bugs fixed in this port but present in YUI compressor:
+* `a{border-left: none;}` is minified to `a{border-left:0}`. See issue [here](https://github.com/yui/yuicompressor/pull/23).
+* Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove all @charset at-rules.
+* Safer/improved comment removal. YUI compressor will ruin part of the output if you use the star IE hack right after a comment: `a{/* comment 1 */*width:auto;/* comment 2 */height:100px}`. See issue [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
+
+## Tests
+
+How to run the test suite:
+* You need a server with PHP installed.
+* Open your browser and navigate to the file `run_tests.php`.
 
 ## API methods
 
