@@ -337,9 +337,7 @@ class CSSmin
         }
 
         // Trim the final string (for any leading or trailing white spaces)
-        $css = preg_replace('/^\s+|\s+$/', '', $css);
-
-        return $css;
+        return trim($css);
     }
 
     /**
