@@ -39,8 +39,8 @@ function countBytes($str)
 
 function run_tests()
 {
-    $yui_tests = glob(dirname(__FILE__) . '/yui_tests/*.css');
-	$my_tests = glob(dirname(__FILE__) . '/my_tests/*.css');
+    $yui_tests = glob(dirname(__FILE__) . '/yui/*.css');
+	$my_tests = glob(dirname(__FILE__) . '/mine/*.css');
 
 	$files = array_merge($yui_tests, $my_tests);
 
@@ -73,6 +73,6 @@ function run_tests()
 }
 
 
-require_once 'cssmin.php';
+require_once '../cssmin.php';
 
 run_tests();
