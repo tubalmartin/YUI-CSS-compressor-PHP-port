@@ -48,9 +48,9 @@ This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yui
 
 Bugs fixed in this port but present in YUI compressor:
 
-* `a{border-left: none;}` is minified to `a{border-left:0}`. See issue [here](https://github.com/yui/yuicompressor/pull/23).
+* `a{border-left: none;}` is minified to `a{border-left:0}`. YUI compressor has a typo in a regular expression. See issue [here](https://github.com/yui/yuicompressor/pull/23).
 * Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove all @charset at-rules.
-* Safer/improved comment removal. YUI compressor will ruin part of the output if you use the star IE hack right after a comment: `a{/* comment 1 */*width:auto;/* comment 2 */height:100px}`. See issue [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
+* Safer/improved comment removal. YUI compressor will ruin part of the output if you use the "IE star hack" right after a comment: `a{/* comment 1 */*width:auto;/* comment 2 */height:100px}`. See issue [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
 
 ## Tests
 
