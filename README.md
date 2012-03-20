@@ -54,13 +54,17 @@ This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yui
 * `background: none;` is not compressed to `background:0;` anymore. See issue [#2528127](http://yuilibrary.com/projects/yuicompressor/ticket/2528127).
 * `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
 * Trailing `;` is not removed anymore if the last property is prefixed with a `*` (lte IE7 hack). See issue [#2528146](http://yuilibrary.com/projects/yuicompressor/ticket/2528146)
+* Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
 
 **Enhancements in this port not present in YUI compressor:**
 
 * Signed numbers (+-) are compressed correctly. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
+* Percentage RGB values in the functional notation are compressed i.e. `rgb(100%, 0%, 0%)` gets minified to `#f00`.
+* Negative RGB values in the functional notation are supported i.e. `rgb(255, -1, -45)` or `rgb(-10%, 30%, 80%)`.
+* RGB values outside the sRGB color space are clipped. `0 - 255` or `0% - 100%`.
 * All regular expressions are case insensitive.
 
-All unit tests are updated to cover these bug fixes.
+All unit tests provided are updated to cover these bug fixes and enhancements.
 
 ## Tests
 

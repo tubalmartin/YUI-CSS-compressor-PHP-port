@@ -309,9 +309,9 @@ class CSSmin
         // Replace 0.6 to .6, -0.8 to -.8 but only when preceded by : or a white-space
         $css = preg_replace('/(\:|\s)(\-)?0+\.(\d+)/', '$1$2.$3', $css);
 
-        // Shorten colors from rgb(51,102,153) to #336699
+        // Shorten colors from rgb(51,102,153) to #336699, rgb(100%,0%,0%) to #ff0000 (sRGB color space)
         // This makes it more likely that it'll get further compressed in the next step.
-        $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s]+)\s*\)/i', array($this, 'callback_three'), $css);
+        $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s\-\.\%]+)\s*\)(.{1})/i', array($this, 'callback_three'), $css);
 
         // Shorten colors from #AABBCC to #ABC.
         $css = $this->compress_hex_colors($css);
@@ -509,14 +509,32 @@ class CSSmin
 
     private function callback_three($matches)
     {
-        $rgbcolors = explode(',', $matches[1]);
+        // Support for percentage values rgb(100%, 0%, 45%);
+        if ($this->index_of($matches[1], '%') >= 0){
+            $rgbcolors = explode(',', str_replace('%', '', $matches[1]));
+            for ($i = 0; $i < count($rgbcolors); $i++) {
+                $rgbcolors[$i] = round(floatval($rgbcolors[$i]) * 2.55);
+            }
+        } else {
+            $rgbcolors = explode(',', $matches[1]);
+        }
+
+        // Values outside the device gamut should be clipped (0-255)
         for ($i = 0; $i < count($rgbcolors); $i++) {
-            $rgbcolors[$i] = base_convert(strval(intval($rgbcolors[$i], 10)), 10, 16);
+            $rgbcolors[$i] = intval($rgbcolors[$i], 10);
+            $rgbcolors[$i] = $rgbcolors[$i] > 255 ? 255 : ($rgbcolors[$i] < 0 ? 0 : $rgbcolors[$i]);
+            $rgbcolors[$i] = base_convert(strval($rgbcolors[$i]), 10, 16);
             if (strlen($rgbcolors[$i]) === 1) {
                 $rgbcolors[$i] = '0' . $rgbcolors[$i];
             }
         }
-        return '#' . implode('', $rgbcolors);
+
+        // Fix for issue #2528093
+        if (!preg_match('/[\s\,\);\}]/', $matches[2])){
+            $matches[2] = ' ' . $matches[2];
+        }
+
+        return '#' . implode('', $rgbcolors) . $matches[2];
     }
 
     /* HELPERS
