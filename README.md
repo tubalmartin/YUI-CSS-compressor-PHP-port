@@ -46,7 +46,7 @@ echo $output_css1 . $output_css2;
 
 This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the YUI compressor "cssmin.js".
 
-Bugs fixed in this port but present in YUI compressor:
+**Bugs fixed in this port but present in YUI compressor:**
 
 * `border-left: none;` gets compressed to `border-left:0`. YUI compressor has a typo in a regular expression. See issue [here](https://github.com/yui/yuicompressor/pull/23).
 * Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove all @charset at-rules.
@@ -55,7 +55,8 @@ Bugs fixed in this port but present in YUI compressor:
 * `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
 * Trailing `;` is not removed anymore if the last property is prefixed with a `*` (lte IE7 hack). See issue [#2528146](http://yuilibrary.com/projects/yuicompressor/ticket/2528146)
 
-Enhancements in this port not present in YUI compressor:
+**Enhancements in this port not present in YUI compressor:**
+
 * Signed numbers (+-) are compressed correctly. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
 * All regular expressions are case insensitive.
 
