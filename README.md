@@ -6,7 +6,7 @@
 
 ## Even better than the original
 
-This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the YUI compressor "cssmin.js".
+This port is based on [commit 91c5ea5 (Sep 26, 2011) aka 2.4.7](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the YUI compressor "cssmin.js".
 
 **Bugs fixed in this port but present in YUI compressor:**
 
