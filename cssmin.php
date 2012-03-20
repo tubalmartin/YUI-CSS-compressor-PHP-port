@@ -85,7 +85,7 @@ class CSSmin
             $comment_preserve_string = self::COMMENT . (count($this->comments) - 1) . '___';
             $css = $this->str_slice($css, 0, $start_index + 2) . $comment_preserve_string . $this->str_slice($css, $end_index);
             // Set correct start_index: Fixes issue #2528130
-			$start_index = $end_index + 2 + strlen($comment_preserve_string) - strlen($comment_found);
+            $start_index = $end_index + 2 + strlen($comment_preserve_string) - strlen($comment_found);
         }
 
         // preserve strings so their content doesn't get accidentally minified
@@ -261,7 +261,7 @@ class CSSmin
         $css = preg_replace('/\s+/', ' ', $css);
 
         // Replace +1.2em to 1.2em, +.8px to .8px, +2% to 2% but only when preceded by : or a white-space
-		$css = preg_replace('/(\:|\s)\+(\.?\d+)/', '$1$2', $css);
+        $css = preg_replace('/(\:|\s)\+(\.?\d+)/', '$1$2', $css);
 
         // Remove the spaces before the things that should not have spaces before them.
         // But, be careful not to turn "p :link {...}" into "p:link{...}"
@@ -287,10 +287,10 @@ class CSSmin
         // remove unnecessary semicolons
         $css = preg_replace('/;+\}/', '}', $css);
 
-		// Fix for issue: #2528146
-		// Restore semicolon if the last property is prefixed with a `*` (lte IE7 hack)
-		// to avoid issues on Symbian S60 3.x browsers.
-		$css = preg_replace('/(\*[^\s\:\*\/]+\:)([^;\}]+)\}/', '$1$2;}', $css);
+        // Fix for issue: #2528146
+        // Restore semicolon if the last property is prefixed with a `*` (lte IE7 hack)
+        // to avoid issues on Symbian S60 3.x browsers.
+        $css = preg_replace('/(\*[^\s\:\*\/]+\:)([^;\}]+)\}/', '$1$2;}', $css);
 
         // Replace 0(px,em,%) with 0.
         $css = preg_replace('/([\s\:])(0)(?:px|em|%|in|cm|mm|pc|pt|ex)/i', '$1$2', $css);
@@ -298,9 +298,9 @@ class CSSmin
         // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
         $css = preg_replace('/\:0(?: 0){1,3}(;|\})/', ':0$1', $css);
 
-		// Fix for issue: #2528142
-		// Replace text-shadow:0; with text-shadow:0 0 0;
-		$css = preg_replace('/(text-shadow\:0)(;|\})/ie', "strtolower('$1 0 0$2')", $css);
+        // Fix for issue: #2528142
+        // Replace text-shadow:0; with text-shadow:0 0 0;
+        $css = preg_replace('/(text-shadow\:0)(;|\})/ie', "strtolower('$1 0 0$2')", $css);
 
         // Replace background-position:0; with background-position:0 0;
         // same for transform-origin
