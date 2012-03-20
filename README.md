@@ -4,6 +4,37 @@
 
 * [Minify](https://github.com/mrclay/minify)
 
+## Even better than the original
+
+This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the YUI compressor "cssmin.js".
+
+**Bugs fixed in this port but present in YUI compressor:**
+
+* `border-left: none;` gets compressed to `border-left:0`. YUI compressor has a typo in a regular expression. See issue [here](https://github.com/yui/yuicompressor/pull/23).
+* Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove all @charset at-rules.
+* Safer/improved comment removal. YUI compressor would ruin part of the output if the `*` selector is used right after a comment: `a{/* comment 1 */*width:auto;}/* comment 2 */* html .b{height:100px}`. See issues [#2528130](http://yuilibrary.com/projects/yuicompressor/ticket/2528130), [#2528118](http://yuilibrary.com/projects/yuicompressor/ticket/2528118) & [this topic](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
+* `background: none;` is not compressed to `background:0;` anymore. See issue [#2528127](http://yuilibrary.com/projects/yuicompressor/ticket/2528127).
+* `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
+* Trailing `;` is not removed anymore if the last property is prefixed with a `*` (lte IE7 hack). See issue [#2528146](http://yuilibrary.com/projects/yuicompressor/ticket/2528146)
+* Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
+
+**Enhancements in this port not present in YUI compressor:**
+
+* Signed numbers (+-) are compressed correctly. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
+* Percentage RGB values in the functional notation are compressed i.e. `rgb(100%, 0%, 0%)` gets minified to `#f00`.
+* Negative RGB values in the functional notation are supported and clipped i.e. `rgb(255, -1, -45)` or `rgb(-10%, 30%, 80%)`.
+* RGB values outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `#f00` (it's the same as `rgb(255, 0, 0)`)
+* All regular expressions are case insensitive.
+
+All unit tests provided are updated to cover these bug fixes and enhancements.
+
+## Tests
+
+How to run the test suite:
+
+* You need a server with PHP installed.
+* Open your browser and navigate to the file `tests/run.php`.
+
 ## How to use
 
 ```php
@@ -41,37 +72,6 @@ $output_css2 = $compressor->run($input_css2, 2000);
 // Do whatever you need with the compressed CSS code
 echo $output_css1 . $output_css2;
 ```
-
-## Even better than the original
-
-This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the YUI compressor "cssmin.js".
-
-**Bugs fixed in this port but present in YUI compressor:**
-
-* `border-left: none;` gets compressed to `border-left:0`. YUI compressor has a typo in a regular expression. See issue [here](https://github.com/yui/yuicompressor/pull/23).
-* Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove all @charset at-rules.
-* Safer/improved comment removal. YUI compressor would ruin part of the output if the `*` selector is used right after a comment: `a{/* comment 1 */*width:auto;}/* comment 2 */* html .b{height:100px}`. See issues [#2528130](http://yuilibrary.com/projects/yuicompressor/ticket/2528130), [#2528118](http://yuilibrary.com/projects/yuicompressor/ticket/2528118) & [this topic](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
-* `background: none;` is not compressed to `background:0;` anymore. See issue [#2528127](http://yuilibrary.com/projects/yuicompressor/ticket/2528127).
-* `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
-* Trailing `;` is not removed anymore if the last property is prefixed with a `*` (lte IE7 hack). See issue [#2528146](http://yuilibrary.com/projects/yuicompressor/ticket/2528146)
-* Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
-
-**Enhancements in this port not present in YUI compressor:**
-
-* Signed numbers (+-) are compressed correctly. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
-* Percentage RGB values in the functional notation are compressed i.e. `rgb(100%, 0%, 0%)` gets minified to `#f00`.
-* Negative RGB values in the functional notation are supported and clipped i.e. `rgb(255, -1, -45)` or `rgb(-10%, 30%, 80%)`.
-* RGB values outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `#f00` (it's the same as `rgb(255, 0, 0)`)
-* All regular expressions are case insensitive.
-
-All unit tests provided are updated to cover these bug fixes and enhancements.
-
-## Tests
-
-How to run the test suite:
-
-* You need a server with PHP installed.
-* Open your browser and navigate to the file `tests/run.php`.
 
 ## API methods
 
