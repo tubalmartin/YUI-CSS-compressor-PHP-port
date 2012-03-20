@@ -272,7 +272,7 @@ class CSSmin
         $css = preg_replace('/' . self::CLASSCOLON . '/', ':', $css);
 
         // retain space for special IE6 cases
-        $css = preg_replace('/\:first\-(line|letter)(\{|,)/', ':first-$1 $2', $css);
+        $css = preg_replace('/\:first\-(line|letter)(\{|,)/i', ':first-$1 $2', $css);
 
         // no space after the end of a preserved comment
         $css = preg_replace('/\*\/ /', '*/', $css);
@@ -316,8 +316,8 @@ class CSSmin
         // Shorten colors from #AABBCC to #ABC.
         $css = $this->compress_hex_colors($css);
 
-        // border: none -> border:0
-        $css = preg_replace('/(border\-?(?:top|right|bottom|left|)|outline|background)\:none(;|\})/ie', "strtolower('$1:0$2')", $css);
+        // border: none to border:0, outline: none to outline:0
+        $css = preg_replace('/(border\-?(?:top|right|bottom|left|)|outline)\:none(;|\})/ie', "strtolower('$1:0$2')", $css);
 
         // shorter opacity IE filter
         $css = preg_replace('/progid\:DXImageTransform\.Microsoft\.Alpha\(Opacity\=/i', 'alpha(opacity=', $css);
@@ -367,7 +367,7 @@ class CSSmin
         $max_index = strlen($css) - 1;
         $append_index = $index = $last_index = $offset = 0;
         $sb = array();
-        $pattern = '/url\(\s*(["\']?)data\:/';
+        $pattern = '/url\(\s*(["\']?)data\:/i';
 
         // Since we need to account for non-base64 data urls, we need to handle
         // ' and ) being part of the data string. Hence switching to indexOf,
