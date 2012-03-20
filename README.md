@@ -60,8 +60,8 @@ This port is based on [commit 91c5ea5 (Sep 26, 2011)](https://github.com/yui/yui
 
 * Signed numbers (+-) are compressed correctly. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
 * Percentage RGB values in the functional notation are compressed i.e. `rgb(100%, 0%, 0%)` gets minified to `#f00`.
-* Negative RGB values in the functional notation are supported i.e. `rgb(255, -1, -45)` or `rgb(-10%, 30%, 80%)`.
-* RGB values outside the sRGB color space are clipped. `0 - 255` or `0% - 100%`.
+* Negative RGB values in the functional notation are supported and clipped i.e. `rgb(255, -1, -45)` or `rgb(-10%, 30%, 80%)`.
+* RGB values outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `#f00` (it's the same as `rgb(255, 0, 0)`)
 * All regular expressions are case insensitive.
 
 All unit tests provided are updated to cover these bug fixes and enhancements.
