@@ -84,7 +84,8 @@ class CSSmin
             $this->comments[] = $comment_found;
             $comment_preserve_string = self::COMMENT . (count($this->comments) - 1) . '___';
             $css = $this->str_slice($css, 0, $start_index + 2) . $comment_preserve_string . $this->str_slice($css, $end_index);
-            $start_index = $end_index + 2 + strlen($comment_preserve_string) - strlen($comment_found);
+            // Set correct start_index: Fixes issue #2528130
+			$start_index = $end_index + 2 + strlen($comment_preserve_string) - strlen($comment_found);
         }
 
         // preserve strings so their content doesn't get accidentally minified
@@ -259,6 +260,9 @@ class CSSmin
         // Normalize all whitespace strings to single spaces. Easier to work with that way.
         $css = preg_replace('/\s+/', ' ', $css);
 
+        // Replace +1.2em to 1.2em, +.8px to .8px, +2% to 2% but only when preceded by : or a white-space
+		$css = preg_replace('/(\:|\s)\+(\.?\d+)/', '$1$2', $css);
+
         // Remove the spaces before the things that should not have spaces before them.
         // But, be careful not to turn "p :link {...}" into "p:link{...}"
         // Swap out any pseudo-class colons with the token, and then swap back.
@@ -283,30 +287,37 @@ class CSSmin
         // remove unnecessary semicolons
         $css = preg_replace('/;+\}/', '}', $css);
 
+		// Fix for issue: #2528146
+		// Restore semicolon if the last property is prefixed with a `*` (lte IE7 hack)
+		// to avoid issues on Symbian S60 3.x browsers.
+		$css = preg_replace('/(\*[^\s\:\*\/]+\:)([^;\}]+)\}/', '$1$2;}', $css);
+
         // Replace 0(px,em,%) with 0.
         $css = preg_replace('/([\s\:])(0)(?:px|em|%|in|cm|mm|pc|pt|ex)/i', '$1$2', $css);
 
-        // Replace 0 0 0 0; with 0.
-        $css = preg_replace('/\:0 0 0 0(;|\})/', ':0$1', $css);
-        $css = preg_replace('/\:0 0 0(;|\})/', ':0$1', $css);
-        $css = preg_replace('/\:0 0(;|\})/', ':0$1', $css);
+        // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
+        $css = preg_replace('/\:0(?: 0){1,3}(;|\})/', ':0$1', $css);
+
+		// Fix for issue: #2528142
+		// Replace text-shadow:0; with text-shadow:0 0 0;
+		$css = preg_replace('/(text-shadow\:0)(;|\})/ie', "strtolower('$1 0 0$2')", $css);
 
         // Replace background-position:0; with background-position:0 0;
         // same for transform-origin
-        $css = preg_replace_callback('/(background\-position|(?:webkit|moz|o|ms|)\-?transform\-origin)\:0(;|\})/i', array($this, 'callback_three'), $css);
+        $css = preg_replace('/(background\-position|(?:webkit|moz|o|ms|)\-?transform\-origin)\:0(;|\})/ie', "strtolower('$1:0 0$2')", $css);
 
-        // Replace 0.6 to .6, but only when preceded by : or a white-space
-        $css = preg_replace('/(\:|\s)0+\.(\d+)/', '$1.$2', $css);
+        // Replace 0.6 to .6, -0.8 to -.8 but only when preceded by : or a white-space
+        $css = preg_replace('/(\:|\s)(\-)?0+\.(\d+)/', '$1$2.$3', $css);
 
         // Shorten colors from rgb(51,102,153) to #336699
         // This makes it more likely that it'll get further compressed in the next step.
-        $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s]+)\s*\)/i', array($this, 'callback_four'), $css);
+        $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s]+)\s*\)/i', array($this, 'callback_three'), $css);
 
         // Shorten colors from #AABBCC to #ABC.
         $css = $this->compress_hex_colors($css);
 
         // border: none -> border:0
-        $css = preg_replace_callback('/(border\-?(?:top|right|bottom|left|)|outline|background)\:none(;|\})/i', array($this, 'callback_five'), $css);
+        $css = preg_replace('/(border\-?(?:top|right|bottom|left|)|outline|background)\:none(;|\})/ie', "strtolower('$1:0$2')", $css);
 
         // shorter opacity IE filter
         $css = preg_replace('/progid\:DXImageTransform\.Microsoft\.Alpha\(Opacity\=/i', 'alpha(opacity=', $css);
@@ -498,11 +509,6 @@ class CSSmin
 
     private function callback_three($matches)
     {
-        return strtolower($matches[1]) . ':0 0' . $matches[2];
-    }
-
-    private function callback_four($matches)
-    {
         $rgbcolors = explode(',', $matches[1]);
         for ($i = 0; $i < count($rgbcolors); $i++) {
             $rgbcolors[$i] = base_convert(strval(intval($rgbcolors[$i], 10)), 10, 16);
@@ -511,11 +517,6 @@ class CSSmin
             }
         }
         return '#' . implode('', $rgbcolors);
-    }
-
-    private function callback_five($matches)
-    {
-        return strtolower($matches[1]) . ':0' . $matches[2];
     }
 
     /* HELPERS
