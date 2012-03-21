@@ -6,7 +6,7 @@
 
 ## Even better than the original
 
-This port is based on [commit 91c5ea5 (Sep 26, 2011) aka 2.4.7](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the YUI compressor "cssmin.js".
+This port is based on [commit 91c5ea5 aka version 2.4.7 (Sep 26, 2011)](https://github.com/yui/yuicompressor/commit/91c5ea5ba37d8f969c3939e3b33a1296c561b872) of the javascript version of the YUI compressor "cssmin.js".
 
 **Bugs fixed in this port but present in YUI compressor:**
 
@@ -20,10 +20,12 @@ This port is based on [commit 91c5ea5 (Sep 26, 2011) aka 2.4.7](https://github.c
 
 **Enhancements in this port not present in YUI compressor:**
 
-* Signed numbers (+-) are compressed correctly. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
-* Percentage RGB values in the functional notation are compressed i.e. `rgb(100%, 0%, 0%)` gets minified to `#f00`.
-* Negative RGB values in the functional notation are supported and clipped i.e. `rgb(255, -1, -45)` or `rgb(-10%, 30%, 80%)`.
-* RGB values outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `#f00` (it's the same as `rgb(255, 0, 0)`)
+* Signed numbers (+-) are compressed correctly. So `+0.2em` gets minified to `.2em`, `-0.4%` to `-.4%` and `+0.000em` to `0`. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
+* Added newer unit lengths `ch, rem, vw, vh, vm, vmin` so we can replace `0rem` or `0vw` with `0`.
+* More `0` unit length values are replaced to `0` i.e. `.0em`, `0.0000in`, `-0px` ... every possible 0 length value, not just `0(px,in,em...)`!
+* Percentage and negative RGB values in the functional notation are supported i.e. `rgb(100%, 0%, 0%)` gets minified to `#f00`.
+* RGB colors outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `#f00` because it's the same as `rgb(255, 0, 0)`.
+* HSL colors are compressed to hexadecimal, i.e. `hsl(0, 100%, 50%)` gets minified too to `#f00`. HSL angles are wrapped and values are clipped if needed.
 * All regular expressions are case insensitive.
 
 All unit tests provided are updated to cover these bug fixes and enhancements.

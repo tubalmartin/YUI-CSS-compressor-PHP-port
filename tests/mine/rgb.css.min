@@ -1,1 +1,1 @@
-a{background:none repeat scroll 0 0 #f00;alpha:rgba(1,2,3,4);background-image:linear-gradient(to bottom,#f00 10%,#f00 90%);background-image:linear-gradient(to bottom,#f00 10%,#f00 90%);background:linear-gradient(to bottom,#f00,#f00);color:#e6ccc2;color:#f00;color:#f00}
+a{background:none repeat scroll 0 0 #f00;alpha:rgba(1,2,3,4);background-image:linear-gradient(to bottom,#f00 10%,#f00 90%);background-image:linear-gradient(to bottom,#f00 10%,#f00 90%);background:linear-gradient(to bottom,#f00,#f00);color:#e5ccc2;color:#f00;color:#f00}

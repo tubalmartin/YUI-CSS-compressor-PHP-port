@@ -89,7 +89,7 @@ class CSSmin
         }
 
         // preserve strings so their content doesn't get accidentally minified
-        $css = preg_replace_callback('/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/", array($this, 'callback_one'), $css);
+        $css = preg_replace_callback('/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/", array($this, 'replace_string'), $css);
 
 
         // Let's divide css code in chunks of 25.000 chars aprox.
@@ -266,7 +266,7 @@ class CSSmin
         // Remove the spaces before the things that should not have spaces before them.
         // But, be careful not to turn "p :link {...}" into "p:link{...}"
         // Swap out any pseudo-class colons with the token, and then swap back.
-        $css = preg_replace_callback('/(?:^|\})(?:(?:[^\{\:])+\:)+(?:[^\{]*\{)/', array($this, 'callback_two'), $css);
+        $css = preg_replace_callback('/(?:^|\})(?:(?:[^\{\:])+\:)+(?:[^\{]*\{)/', array($this, 'replace_colon'), $css);
 
         $css = preg_replace('/\s+([\!\{\}\;\:\>\+\(\)\],])/', '$1', $css);
         $css = preg_replace('/' . self::CLASSCOLON . '/', ':', $css);
@@ -292,8 +292,8 @@ class CSSmin
         // to avoid issues on Symbian S60 3.x browsers.
         $css = preg_replace('/(\*[^\s\:\*\/]+\:)([^;\}]+)\}/', '$1$2;}', $css);
 
-        // Replace 0(px,em,%) with 0.
-        $css = preg_replace('/([\s\:])(0)(?:px|em|%|in|cm|mm|pc|pt|ex)/i', '$1$2', $css);
+        // Replace 0 length units 0(px,em,%) with 0.
+        $css = preg_replace('/([\s\:])(?:[\+\-]?0*\.?0+)(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%)/i', '${1}0', $css);
 
         // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
         $css = preg_replace('/\:0(?: 0){1,3}(;|\})/', ':0$1', $css);
@@ -307,11 +307,13 @@ class CSSmin
         $css = preg_replace('/(background\-position|(?:webkit|moz|o|ms|)\-?transform\-origin)\:0(;|\})/ie', "strtolower('$1:0 0$2')", $css);
 
         // Replace 0.6 to .6, -0.8 to -.8 but only when preceded by : or a white-space
-        $css = preg_replace('/(\:|\s)(\-)?0+\.(\d+)/', '$1$2.$3', $css);
+        $css = preg_replace('/(\:|\s)([\+\-])?0+\.(\d+)/', '$1$2.$3', $css);
 
         // Shorten colors from rgb(51,102,153) to #336699, rgb(100%,0%,0%) to #ff0000 (sRGB color space)
+        // Shorten colors from hsl(0, 100%, 50%) to #ff0000 (sRGB color space)
         // This makes it more likely that it'll get further compressed in the next step.
-        $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s\-\.\%]+)\s*\)(.{1})/i', array($this, 'callback_three'), $css);
+        $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s\-\.\%]+)\s*\)(.{1})/i', array($this, 'rgb_to_hex'), $css);
+        $css = preg_replace_callback('/hsl\s*\(\s*([0-9,\s\-\.\%]+)\s*\)(.{1})/i', array($this, 'hsl_to_hex'), $css);
 
         // Shorten colors from #AABBCC to #ABC.
         $css = $this->compress_hex_colors($css);
@@ -480,7 +482,7 @@ class CSSmin
      * ---------------------------------------------------------------------------------------------
      */
 
-    private function callback_one($matches)
+    private function replace_string($matches)
     {
         $match = $matches[0];
         $quote = substr($match, 0, 1);
@@ -502,31 +504,28 @@ class CSSmin
         return $quote . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . $quote;
     }
 
-    private function callback_two($matches)
+    private function replace_colon($matches)
     {
         return preg_replace('/\:/', self::CLASSCOLON, $matches[0]);
     }
 
-    private function callback_three($matches)
+    private function rgb_to_hex($matches)
     {
         // Support for percentage values rgb(100%, 0%, 45%);
         if ($this->index_of($matches[1], '%') >= 0){
             $rgbcolors = explode(',', str_replace('%', '', $matches[1]));
             for ($i = 0; $i < count($rgbcolors); $i++) {
-                $rgbcolors[$i] = round(floatval($rgbcolors[$i]) * 2.55);
+                $rgbcolors[$i] = $this->round_number(floatval($rgbcolors[$i]) * 2.55);
             }
         } else {
             $rgbcolors = explode(',', $matches[1]);
         }
 
-        // Values outside the device gamut should be clipped (0-255)
+        // Values outside the sRGB color space should be clipped (0-255)
         for ($i = 0; $i < count($rgbcolors); $i++) {
-            $rgbcolors[$i] = intval($rgbcolors[$i], 10);
-            $rgbcolors[$i] = $rgbcolors[$i] > 255 ? 255 : ($rgbcolors[$i] < 0 ? 0 : $rgbcolors[$i]);
-            $rgbcolors[$i] = base_convert(strval($rgbcolors[$i]), 10, 16);
-            if (strlen($rgbcolors[$i]) === 1) {
-                $rgbcolors[$i] = '0' . $rgbcolors[$i];
-            }
+            $rgbcolor = intval($rgbcolors[$i], 10);
+            $rgbcolor = $rgbcolor > 255 ? 255 : ($rgbcolor < 0 ? 0 : $rgbcolor);
+            $rgbcolors[$i] = sprintf("%02x", $rgbcolor);
         }
 
         // Fix for issue #2528093
@@ -537,9 +536,48 @@ class CSSmin
         return '#' . implode('', $rgbcolors) . $matches[2];
     }
 
+    private function hsl_to_hex($matches)
+    {
+        $values = explode(',', str_replace('%', '', $matches[1]));
+        $h = floatval($values[0]);
+        $s = floatval($values[1]);
+        $l = floatval($values[2]);
+
+        // Wrap and clip, then fraction!
+        $h = ((($h % 360) + 360) % 360) / 360;
+        $s = ($s > 100 ? 100 : ($s < 0 ? 0 : $s)) / 100;
+        $l = ($l > 100 ? 100 : ($l < 0 ? 0 : $l)) / 100;
+
+        if ($s == 0) {
+            $r = $g = $b = $this->round_number($l * 255);
+        } else {
+            $v2 = $l < 0.5 ? $l * (1 + $s) : ($l + $s) - ($s * $l);
+            $v1 = (2 * $l) - $v2;
+            $r = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h + (1/3)));
+            $g = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h));
+            $b = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h - (1/3)));
+        }
+
+        return $this->rgb_to_hex(array(null, $r.','.$g.','.$b, $matches[2]));
+    }
+
     /* HELPERS
      * ---------------------------------------------------------------------------------------------
      */
+
+    private function hue_to_rgb($v1, $v2, $vh)
+    {
+        $vh = $vh < 0 ? $vh + 1 : ($vh > 1 ? $vh - 1 : $vh);
+        if ($vh * 6 < 1) return $v1 + ($v2 - $v1) * 6 * $vh;
+        if ($vh * 2 < 1) return $v2;
+        if ($vh * 3 < 2) return $v1 + ($v2 - $v1) * ((2/3) - $vh) * 6;
+        return $v1;
+    }
+
+    private function round_number($n)
+    {
+        return intval(floor(floatval($n) + 0.5), 10);
+    }
 
     /**
      * PHP port of Javascript's "indexOf" function for strings only
