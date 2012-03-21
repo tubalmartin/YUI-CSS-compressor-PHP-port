@@ -523,9 +523,8 @@ class CSSmin
 
         // Values outside the sRGB color space should be clipped (0-255)
         for ($i = 0; $i < count($rgbcolors); $i++) {
-            $rgbcolor = intval($rgbcolors[$i], 10);
-            $rgbcolor = $rgbcolor > 255 ? 255 : ($rgbcolor < 0 ? 0 : $rgbcolor);
-            $rgbcolors[$i] = sprintf("%02x", $rgbcolor);
+            $rgbcolors[$i] = $this->clamp_number(intval($rgbcolors[$i], 10), 0, 255);
+            $rgbcolors[$i] = sprintf("%02x", $rgbcolors[$i]);
         }
 
         // Fix for issue #2528093
@@ -543,13 +542,13 @@ class CSSmin
         $s = floatval($values[1]);
         $l = floatval($values[2]);
 
-        // Wrap and clip, then fraction!
+        // Wrap and clamp, then fraction!
         $h = ((($h % 360) + 360) % 360) / 360;
-        $s = ($s > 100 ? 100 : ($s < 0 ? 0 : $s)) / 100;
-        $l = ($l > 100 ? 100 : ($l < 0 ? 0 : $l)) / 100;
+        $s = $this->clamp_number($s, 0, 100) / 100;
+        $l = $this->clamp_number($l, 0, 100) / 100;
 
         if ($s == 0) {
-            $r = $g = $b = $this->round_number($l * 255);
+            $r = $g = $b = $this->round_number(255 * $l);
         } else {
             $v2 = $l < 0.5 ? $l * (1 + $s) : ($l + $s) - ($s * $l);
             $v1 = (2 * $l) - $v2;
@@ -558,7 +557,7 @@ class CSSmin
             $b = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h - (1/3)));
         }
 
-        return $this->rgb_to_hex(array(null, $r.','.$g.','.$b, $matches[2]));
+        return $this->rgb_to_hex(array('', $r.','.$g.','.$b, $matches[2]));
     }
 
     /* HELPERS
@@ -577,6 +576,11 @@ class CSSmin
     private function round_number($n)
     {
         return intval(floor(floatval($n) + 0.5), 10);
+    }
+
+    private function clamp_number($n, $min, $max)
+    {
+        return min(max($n, $min), $max);
     }
 
     /**
