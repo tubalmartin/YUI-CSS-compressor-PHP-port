@@ -11,7 +11,7 @@ This port is based on version 2.4.7 (Sep 26, 2011) of the [YUI compressor](https
 3\.  [Unit Tests](#unittests)
 4\.  [API Reference](#api)
 5\.  [Who uses this?](#whousesit)
-6\.  [TODOs](#todos)
+6\.  [TODOs](#todos)  
 
 <a name="howtouse"></a>
 ## 1\. How to use
