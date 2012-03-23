@@ -5,13 +5,21 @@ This port is based on version 2.4.7 (Sep 26, 2011) of the [YUI compressor](https
 **Table of Contents**
 
 1\.  [How to use](#howtouse)
+
 2\.  [YUI compressor on asteroids!](#onasteroids)
+
 2.1\.  [Bugs fixed](#bugsfixed)
+
 2.2\.  [Enhancements](#enhancements)
+
 3\.  [Unit Tests](#unittests)
+
 4\.  [API Reference](#api)
+
 5\.  [Who uses this?](#whousesit)
-6\.  [TODOs](#todos)  
+
+6\.  [TODOs](#todos)
+
 
 <a name="howtouse"></a>
 ## 1\. How to use
