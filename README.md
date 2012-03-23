@@ -14,6 +14,7 @@ This port is based on version 2.4.7 (Sep 26, 2011) of the [YUI compressor](https
 6.  [TODOs](#todos)
 
 <a name="howtouse"></a>
+
 ## 1\. How to use
 
 ```php
@@ -53,9 +54,11 @@ echo $output_css1 . $output_css2;
 ```
 
 <a name="onasteroids"></a>
+
 ## 2\. YUI compressor on asteroids!
 
 <a name="bugsfixed"></a>
+
 ### 2.1\. FIXED BUGS still present in the original YUI compressor
 
 * `border-left: none;` gets compressed to `border-left:0`. YUI compressor has a typo in a regular expression. See issue [here](https://github.com/yui/yuicompressor/pull/23).
@@ -67,6 +70,7 @@ echo $output_css1 . $output_css2;
 * Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
 
 <a name="enhancements"></a>
+
 ### 2.2\. ENHANCEMENTS over the original YUI compressor
 
 * Signed numbers (+-) are compressed correctly. So `+0.2em` gets minified to `.2em`, `-0.4%` to `-.4%` and `+0.000em` to `0`. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
@@ -78,6 +82,7 @@ echo $output_css1 . $output_css2;
 * All regular expressions are case insensitive.
 
 <a name="unittests"></a>
+
 ## 3\. Unit Tests
 
 Unit tests are updated according to all bug fixes and enhancements made so do not run YUI's original unit tests against this port.
@@ -91,6 +96,7 @@ How to run the test suite:
 * Open your favourite browser and enter the URL to the file `tests/run.php`.
 
 <a name="api"></a>
+
 ## 4\. API Reference
 
 ### __construct([ bool *$raise_php_limits* ])
@@ -188,11 +194,13 @@ CSSmin default value: `500000`
 Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pcre.configuration.php#ini.pcre.recursion-limit)
 
 <a name="whousesit"></a>
+
 ## 5\. Who uses this port?
 
 * [Minify](https://github.com/mrclay/minify)
 
 <a name="todos"></a>
+
 ## 6\. TODOs
 
 * Style the unit tests output!
