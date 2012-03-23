@@ -193,11 +193,14 @@ CSSmin default value: `500000`
 
 Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pcre.configuration.php#ini.pcre.recursion-limit)
 
+
 <a name="whousesit"></a>
+
 
 ## 5\. Who uses this port?
 
-* [Minify](https://github.com/mrclay/minify)
+
+* [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
 
 <a name="todos"></a>
 
