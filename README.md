@@ -87,7 +87,7 @@ echo $output_css1 . $output_css2;
 * `background: none;` is not compressed to `background:0;` anymore. See issue [#2528127](http://yuilibrary.com/projects/yuicompressor/ticket/2528127).
 * `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
 * Trailing `;` is not removed anymore if the last property is prefixed with a `*` (lte IE7 hack). See issue [#2528146](http://yuilibrary.com/projects/yuicompressor/ticket/2528146)
-* Newlines before and/or after a preserved comment `/*!` are not removed (we leave just 1 newline). YUI removed all newlines making hard to spot an important comment.
+* Newlines before and/or after a preserved comment `/*!` are not removed (we leave just 1 newline). YUI removes all newlines making it really hard to spot an important comment.
 * Spaces surrounding the `+` operator in `calc()` calculations are not removed. YUI removes them and that is wrong.
 * Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
 
@@ -228,9 +228,9 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 * [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
 
+
+
 <a name="todos"></a>
-
-
 ## 6. TODOs
 
 * Some shorthand optimizations
