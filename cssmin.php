@@ -23,6 +23,7 @@
 
 class CSSmin
 {
+    const NL = '___YUICSSMIN_PRESERVED_NL___';
     const TOKEN = '___YUICSSMIN_PRESERVED_TOKEN_';
     const COMMENT = '___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_';
     const CLASSCOLON = '___YUICSSMIN_PSEUDOCLASSCOLON___';
@@ -89,8 +90,7 @@ class CSSmin
         }
 
         // preserve strings so their content doesn't get accidentally minified
-        $css = preg_replace_callback('/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/", array($this, 'replace_string'), $css);
-
+        $css = preg_replace_callback('/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S", array($this, 'replace_string'), $css);
 
         // Let's divide css code in chunks of 25.000 chars aprox.
         // Reason: PHP's PCRE functions like preg_replace have a "backtrack limit"
@@ -225,7 +225,11 @@ class CSSmin
             // so push to the preserved tokens keeping the !
             if (substr($token, 0, 1) === '!') {
                 $this->preserved_tokens[] = $token;
-                $css = preg_replace($placeholder, self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                $token_tring = self::TOKEN . (count($this->preserved_tokens) - 1) . '___';
+                $css = preg_replace($placeholder, $token_tring, $css, 1);
+                // Preserve new lines for /*! important comments
+                $css = preg_replace('/\s*[\n\r\f]+\s*(\/\*'. $token_tring .')/S', self::NL.'$1', $css);
+                $css = preg_replace('/('. $token_tring .'\*\/)\s*[\n\r\f]+\s*/S', '$1'.self::NL, $css);
                 continue;
             }
 
@@ -260,15 +264,32 @@ class CSSmin
         // Normalize all whitespace strings to single spaces. Easier to work with that way.
         $css = preg_replace('/\s+/', ' ', $css);
 
-        // Replace +1.2em to 1.2em, +.8px to .8px, +2% to 2% but only when preceded by : or a white-space
-        $css = preg_replace('/(\:|\s)\+(\.?\d+)/', '$1$2', $css);
+        // Shorten & preserve calculations calc(...) since spaces are important
+        $css = preg_replace_callback('/calc(\((?:[^\(\)]+|(?1))*\))/i', array($this, 'replace_calc'), $css);
+
+        // Replace positive sign from numbers preceded by : or a white-space before the leading space is removed
+        // +1.2em to 1.2em, +.8px to .8px, +2% to 2%
+        $css = preg_replace('/((?<!\\\\)\:|\s)\+(\.?\d+)/S', '$1$2', $css);
+
+        // Remove leading zeros from integer and float numbers preceded by : or a white-space
+        // 000.6 to .6, -0.8 to -.8, 0050 to 50, -01.05 to -1.05
+        $css = preg_replace('/((?<!\\\\)\:|\s)(\-?)0+(\.?\d+)/S', '$1$2$3', $css);
+
+        // Remove trailing zeros from float numbers preceded by : or a white-space
+        // -6.0100em to -6.01em, .0100 to .01, 1.200px to 1.2px
+        $css = preg_replace('/((?<!\\\\)\:|\s)(\-?)(\d?\.\d+?)0+([^\d])/S', '$1$2$3$4', $css);
+
+        // Remove trailing .0 -> -9.0 to -9
+        $css = preg_replace('/((?<!\\\\)\:|\s)(\-?\d+)\.0([^\d])/S', '$1$2$3', $css);
+
+        // Replace 0 length numbers with 0
+        $css = preg_replace('/((?<!\\\\)\:|\s)\-?\.?0+([^\d])/S', '${1}0$2', $css);
 
         // Remove the spaces before the things that should not have spaces before them.
         // But, be careful not to turn "p :link {...}" into "p:link{...}"
         // Swap out any pseudo-class colons with the token, and then swap back.
         $css = preg_replace_callback('/(?:^|\})(?:(?:[^\{\:])+\:)+(?:[^\{]*\{)/', array($this, 'replace_colon'), $css);
-
-        $css = preg_replace('/\s+([\!\{\}\;\:\>\+\(\)\],])/', '$1', $css);
+        $css = preg_replace('/\s+([\!\{\}\;\:\>\+\(\)\]\~\=,])/', '$1', $css);
         $css = preg_replace('/' . self::CLASSCOLON . '/', ':', $css);
 
         // retain space for special IE6 cases
@@ -282,7 +303,7 @@ class CSSmin
         $css = preg_replace('/\band\(/i', 'and (', $css);
 
         // Remove the spaces after the things that should not have spaces after them.
-        $css = preg_replace('/([\!\{\}\:;\>\+\(\[,])\s+/', '$1', $css);
+        $css = preg_replace('/([\!\{\}\:;\>\+\(\[\~\=,])\s+/S', '$1', $css);
 
         // remove unnecessary semicolons
         $css = preg_replace('/;+\}/', '}', $css);
@@ -290,10 +311,10 @@ class CSSmin
         // Fix for issue: #2528146
         // Restore semicolon if the last property is prefixed with a `*` (lte IE7 hack)
         // to avoid issues on Symbian S60 3.x browsers.
-        $css = preg_replace('/(\*[^\s\:\*\/]+\:)([^;\}]+)\}/', '$1$2;}', $css);
+        $css = preg_replace('/(\*[a-z0-9\-]+\s*\:[^;\}]+)(\})/', '$1;$2', $css);
 
         // Replace 0 length units 0(px,em,%) with 0.
-        $css = preg_replace('/([\s\:])(?:[\+\-]?0*\.?0+)(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%)/i', '${1}0', $css);
+        $css = preg_replace('/((?<!\\\\)\:|\s)\-?0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%)/iS', '${1}0', $css);
 
         // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
         $css = preg_replace('/\:0(?: 0){1,3}(;|\})/', ':0$1', $css);
@@ -304,10 +325,7 @@ class CSSmin
 
         // Replace background-position:0; with background-position:0 0;
         // same for transform-origin
-        $css = preg_replace('/(background\-position|(?:webkit|moz|o|ms|)\-?transform\-origin)\:0(;|\})/ie', "strtolower('$1:0 0$2')", $css);
-
-        // Replace 0.6 to .6, -0.8 to -.8 but only when preceded by : or a white-space
-        $css = preg_replace('/(\:|\s)([\+\-])?0+\.(\d+)/', '$1$2.$3', $css);
+        $css = preg_replace('/(background\-position|(?:webkit|moz|o|ms|)\-?transform\-origin)\:0(;|\})/ieS', "strtolower('$1:0 0$2')", $css);
 
         // Shorten colors from rgb(51,102,153) to #336699, rgb(100%,0%,0%) to #ff0000 (sRGB color space)
         // Shorten colors from hsl(0, 100%, 50%) to #ff0000 (sRGB color space)
@@ -315,17 +333,17 @@ class CSSmin
         $css = preg_replace_callback('/rgb\s*\(\s*([0-9,\s\-\.\%]+)\s*\)(.{1})/i', array($this, 'rgb_to_hex'), $css);
         $css = preg_replace_callback('/hsl\s*\(\s*([0-9,\s\-\.\%]+)\s*\)(.{1})/i', array($this, 'hsl_to_hex'), $css);
 
-        // Shorten colors from #AABBCC to #ABC.
+        // Shorten colors from #AABBCC to #ABC or short color name.
         $css = $this->compress_hex_colors($css);
 
         // border: none to border:0, outline: none to outline:0
-        $css = preg_replace('/(border\-?(?:top|right|bottom|left|)|outline)\:none(;|\})/ie', "strtolower('$1:0$2')", $css);
+        $css = preg_replace('/(border\-?(?:top|right|bottom|left|)|outline)\:none(;|\})/ieS', "strtolower('$1:0$2')", $css);
 
         // shorter opacity IE filter
         $css = preg_replace('/progid\:DXImageTransform\.Microsoft\.Alpha\(Opacity\=/i', 'alpha(opacity=', $css);
 
         // Remove empty rules.
-        $css = preg_replace('/[^\};\{\/]+\{\}/', '', $css);
+        $css = preg_replace('/[^\};\{\/]+\{\}/S', '', $css);
 
         // Some source control tools don't like it when files containing lines longer
         // than, say 8000 characters, are checked in. The linebreak option is used in
@@ -345,6 +363,9 @@ class CSSmin
         // Replace multiple semi-colons in a row by a single one
         // See SF bug #1980989
         $css = preg_replace('/;;+/', ';', $css);
+
+        // Restore new lines for /*! important comments
+        $css = preg_replace('/'. self::NL .'/', "\n", $css);
 
         // restore preserved comments and strings
         for ($i = 0, $max = count($this->preserved_tokens); $i < $max; $i++) {
@@ -427,7 +448,7 @@ class CSSmin
     }
 
     /**
-     * Utility method to compress hex color values of the form #AABBCC to #ABC.
+     * Utility method to compress hex color values of the form #AABBCC to #ABC or short color name.
      *
      * DOES NOT compress CSS ID selectors which match the above pattern (which would break things).
      * e.g. #AddressForm { ... }
@@ -444,9 +465,21 @@ class CSSmin
     private function compress_hex_colors($css)
     {
         // Look for hex colors inside { ... } (to avoid IDs) and which don't have a =, or a " in front of them (to avoid filters)
-        $pattern = '/(\=\s*?["\']?)?#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])(\}|[^0-9a-f{][^{]*?\})/i';
+        $pattern = '/(\=\s*?["\']?)?#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])(\}|[^0-9a-f{][^{]*?\})/iS';
         $_index = $index = $last_index = $offset = 0;
         $sb = array();
+        // See: http://ajaxmin.codeplex.com/wikipage?title=CSS%20Colors
+        $short_safe = array(
+            '#808080' => 'gray',
+            '#008000' => 'green',
+            '#800000' => 'maroon',
+            '#000080' => 'navy',
+            '#808000' => 'olive',
+            '#800080' => 'purple',
+            '#c0c0c0' => 'silver',
+            '#008080' => 'teal',
+            '#f00' => 'red'
+        );
 
         while (preg_match($pattern, $css, $m, 0, $offset)) {
             $index = $this->index_of($css, $m[0], $offset);
@@ -463,11 +496,13 @@ class CSSmin
                     strtolower($m[4]) == strtolower($m[5]) &&
                     strtolower($m[6]) == strtolower($m[7])) {
                     // Compress.
-                    $sb[] = '#' . strtolower($m[3] . $m[5] . $m[7]);
+                    $hex = '#' . strtolower($m[3] . $m[5] . $m[7]);
                 } else {
                     // Non compressible color, restore but lower case.
-                    $sb[] = '#' . strtolower($m[2] . $m[3] . $m[4] . $m[5] . $m[6] . $m[7]);
+                    $hex = '#' . strtolower($m[2] . $m[3] . $m[4] . $m[5] . $m[6] . $m[7]);
                 }
+                // replace Hex colors to short safe color names
+                $sb[] = array_key_exists($hex, $short_safe) ? $short_safe[$hex] : $hex;
             }
 
             $_index = $offset = $last_index - strlen($m[8]);
@@ -507,6 +542,12 @@ class CSSmin
     private function replace_colon($matches)
     {
         return preg_replace('/\:/', self::CLASSCOLON, $matches[0]);
+    }
+
+    private function replace_calc($matches)
+    {
+        $this->preserved_tokens[] = preg_replace('/\s?([\*\/\(\),])\s?/', '$1', $matches[0]);
+        return self::TOKEN . (count($this->preserved_tokens) - 1) . '___';
     }
 
     private function rgb_to_hex($matches)

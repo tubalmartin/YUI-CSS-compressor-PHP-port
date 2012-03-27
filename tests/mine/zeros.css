@@ -1,4 +1,21 @@
 a{
-	padding: +0% 0.0% 0in 0vw;
-	margin:-.0em .0pc +0px -00.0000%;
+	padding: +0000% 0.0% 0in 00.000;
+	margin:-.0em .000pc +0px -00.0000%;
 }
+b{
+	leading: 0050% -0010.5% 001.004in -0.45vw;
+	trailing: 5000% .500px 1.200100em 0.40500
+}
+body
+{
+  margin: /* leading units zeros */ 009px /* trailing fraction zeros */ 9.8000px /* zero pixels (remove units) */ 00px /* zero units */ 0.9em;
+  height: 09.900;
+  width: 00.500;
+  z-index: 0.090;
+  font-size: 09.000;
+  top: 000.000px;
+  bottom: 0px;
+}
+/* Numbers in selectors */
+:lang(de) > p.lang\:0\.234500{height:0.20em }
+#\:34\:0500 {width:10.01% ;}

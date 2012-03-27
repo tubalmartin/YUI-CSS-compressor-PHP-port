@@ -17,6 +17,26 @@ This port is based on version 2.4.7 (Sep 26, 2011) of the [YUI compressor](https
 
 ## 1\. How to use
 
+**Need a GUI?**
+
+We've made an awesome web based GUI to use the compressor, it's in the `gui` folder.
+We built the GUI because many times we need to compress some CSS code quick and easily.
+
+GUI features:
+
+* Optional on-the-fly LESS compilation before compression with error reporting included. We use LESS to write CSS so we spent some time to add LESS compilation before compression.
+* Absolute control of the library.
+
+How to use the GUI:
+
+* You need a server with PHP 4.3+ installed (preferrably PHP 5).
+* Download the repository and upload it to your server.
+* Open your favourite browser and enter the URL to the `/gui` folder.
+
+**I don't need a GUI**
+
+OK, here's an example that covers a tipical use scenario:
+
 ```php
 <?php
 
@@ -67,19 +87,26 @@ echo $output_css1 . $output_css2;
 * `background: none;` is not compressed to `background:0;` anymore. See issue [#2528127](http://yuilibrary.com/projects/yuicompressor/ticket/2528127).
 * `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
 * Trailing `;` is not removed anymore if the last property is prefixed with a `*` (lte IE7 hack). See issue [#2528146](http://yuilibrary.com/projects/yuicompressor/ticket/2528146)
+* Newlines before and/or after a preserved comment `/*!` are not removed (we leave just 1 newline). YUI removed all newlines making hard to spot an important comment.
+* Spaces surrounding the `+` operator in `calc()` calculations are not removed. YUI removes them and that is wrong.
 * Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
 
 <a name="enhancements"></a>
 
 ### 2.2\. ENHANCEMENTS over the original YUI compressor
 
-* Signed numbers (+-) are compressed correctly. So `+0.2em` gets minified to `.2em`, `-0.4%` to `-.4%` and `+0.000em` to `0`. See request [here](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9307).
-* Added newer unit lengths `ch, rem, vw, vh, vm, vmin` so we can replace `0rem` or `0vw` with `0`.
-* More `0` unit length values are replaced to `0` i.e. `.0em`, `0.0000in`, `-0px` ... every possible 0 length value, not just `0(px,in,em...)`!
-* Percentage and negative RGB values in the functional notation are supported i.e. `rgb(100%, 0%, 0%)` gets minified to `#f00`.
-* RGB colors outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `#f00` because it's the same as `rgb(255, 0, 0)`.
-* HSL colors are compressed to hexadecimal, i.e. `hsl(0, 100%, 50%)` gets minified too to `#f00`. HSL angles are wrapped and values are clipped if needed.
-* All regular expressions are case insensitive.
+* Numbers & units compression:
+    * Sign is removed from positive numbers: `+2em` gets minified to `2em`.
+    * Leading and trailing zeros are removed: `0.2em` gets minified to `.2em`, `-01.010%` to `-1.01%`, `-9.0` to `-9`.
+    * Zero length numbers & units are replaced with `0`: `-0.00%`, `.0em`, `0.0000`, `-0px` get minified to `0`.
+    * Added newer unit lengths `ch, rem, vw, vh, vm, vmin` so we can replace `0rem` or `0vw` with `0`.
+* Colors compression:
+    * Percentage and negative RGB values are supported i.e. `rgb(100%, 0%, 0%)` gets minified to `red`.
+    * RGB colors outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `red` because it's the same as `rgb(255, 0, 0)`.
+    * HSL colors are compressed too, i.e. `hsl(0, 100%, 50%)` gets minified to `red`. HSL angles are wrapped and values are clipped if needed.
+    * Some colors are compressed to its color name if it's shorter: `#f00` gets minified to `red`.
+* All regular expressions that match text are case insensitive.
+
 
 <a name="unittests"></a>
 
@@ -87,12 +114,12 @@ echo $output_css1 . $output_css2;
 
 Unit tests are updated according to all bug fixes and enhancements made so do not run YUI's original unit tests against this port.
 
-More than 50 unit tests and many more to come!!
+**60** unit tests written!!
 
 How to run the test suite:
 
-* You need a server with PHP 4+ installed.
-* Download the code and upload it to a folder in your server.
+* You need a server with PHP 4.3+ installed (preferrably PHP 5).
+* Download the repository and upload it to a folder in your server.
 * Open your favourite browser and enter the URL to the file `tests/run.php`.
 
 <a name="api"></a>
@@ -206,7 +233,5 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6\. TODOs
 
-* Style the unit tests output!
-* Add more unit tests (from Microsoft's AjaxMin)
 * Some shorthand optimizations
 * Even better colors compression
