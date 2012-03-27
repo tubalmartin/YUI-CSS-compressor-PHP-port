@@ -15,7 +15,7 @@ This port is based on version 2.4.7 (Sep 26, 2011) of the [YUI compressor](https
 
 <a name="howtouse"></a>
 
-## 1\. How to use
+## 1. How to use
 
 **Need a GUI?**
 
@@ -75,11 +75,11 @@ echo $output_css1 . $output_css2;
 
 <a name="onasteroids"></a>
 
-## 2\. YUI compressor on asteroids!
+## 2. YUI compressor on asteroids!
 
 <a name="bugsfixed"></a>
 
-### 2.1\. FIXED BUGS still present in the original YUI compressor
+### 2.1. FIXED BUGS still present in the original YUI compressor
 
 * `border-left: none;` gets compressed to `border-left:0`. YUI compressor has a typo in a regular expression. See issue [here](https://github.com/yui/yuicompressor/pull/23).
 * Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove all @charset at-rules.
@@ -93,7 +93,7 @@ echo $output_css1 . $output_css2;
 
 <a name="enhancements"></a>
 
-### 2.2\. ENHANCEMENTS over the original YUI compressor
+### 2.2. ENHANCEMENTS over the original YUI compressor
 
 * Numbers & units compression:
     * Sign is removed from positive numbers: `+2em` gets minified to `2em`.
@@ -110,7 +110,7 @@ echo $output_css1 . $output_css2;
 
 <a name="unittests"></a>
 
-## 3\. Unit Tests
+## 3. Unit Tests
 
 Unit tests are updated according to all bug fixes and enhancements made so do not run YUI's original unit tests against this port.
 
@@ -124,7 +124,7 @@ How to run the test suite:
 
 <a name="api"></a>
 
-## 4\. API Reference
+## 4. API Reference
 
 ### __construct([ bool *$raise_php_limits* ])
 
@@ -224,14 +224,14 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 <a name="whousesit"></a>
 
 
-## 5\. Who uses this port?
-
+## 5. Who uses this port?
 
 * [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
 
+
 <a name="todos"></a>
 
-## 6\. TODOs
+## 6. TODOs
 
 * Some shorthand optimizations
 * Even better colors compression
