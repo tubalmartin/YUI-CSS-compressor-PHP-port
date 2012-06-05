@@ -1,5 +1,7 @@
 <?php
 
+mb_internal_encoding('UTF-8');
+
 /**
  * Navigates through an array and removes slashes from the values.
  *
@@ -41,9 +43,6 @@ if (!empty($_POST)):
     // Require the compressor
     include '../cssmin.php';
 
-    // User's CSS code
-    $input_css = $_POST['css'];
-
     // Form options
     parse_str($_POST['options']);
 
@@ -60,11 +59,16 @@ if (!empty($_POST)):
         $compressor->set_pcre_recursion_limit(1000 * $pcre_recursion_limit);
     }
 
-    // Compress the CSS code and store the result in a variable
-    $output_css = $compressor->run($input_css, $linebreak_pos);
+    // Compress the CSS code and store data
+    $output = array();
+    $output['css'] = $compressor->run($_POST['css'], $linebreak_pos);
+    $output['originalSize'] = mb_strlen($_POST['css'], '8bit');
+    $output['compressedSize'] = mb_strlen($output['css'], '8bit');
+    $output['bytesSaved'] = $output['originalSize'] - $output['compressedSize'];
+    $output['compressionRatio'] = round(($output['bytesSaved'] * 100) / $output['originalSize'], 2);   
 
-    // Output compressed CSS code
-    echo $output_css;
+    // Output data
+    echo json_encode($output);
 
 else:
 
@@ -98,6 +102,7 @@ else:
                     </div>
                     <div id="output-container" class="hide">
                         <label for="output-css">Here's your compressed CSS code:</label>
+                        <span class="help-block">Original size: <span id="original-size"></span> bytes | Compressed size: <span id="compressed-size"></span> bytes | Bytes saved: <span id="bytes-saved"></span> | Compression ratio: <span id="compression-ratio"></span>%</span>
                         <textarea id="output-css" class="input-block-level" rows="10"></textarea>
                     </div>
                 </div>

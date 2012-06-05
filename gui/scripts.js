@@ -3,6 +3,10 @@ $(function(){
     var inputCss = $('#input-css')
       ,	outputCss = $('#output-css')
       ,	outputContainer = $('#output-container')
+      , originalSize = $('#original-size')
+      , compressedSize = $('#compressed-size')
+      , bytesSaved = $('#bytes-saved')
+      , compressionRatio = $('#compression-ratio')
       ,	compressBtn = $('#compress-btn')
       ,	lessConsole = $('#less-error-message')
 
@@ -46,13 +50,18 @@ $(function(){
                 // Hide LESS error console
                 lessConsole.slideUp('fast');
 
-                // Show & fill output
-                outputContainer.slideDown('fast');
-                outputCss.val(data);
+                // Fill output & show
+                outputCss.val(data.css);
+                originalSize.html(data.originalSize);
+                compressedSize.html(data.compressedSize);
+                bytesSaved.html(data.bytesSaved);
+                compressionRatio.html(data.compressionRatio);
 
+                outputContainer.slideDown('fast');
+                
                 // Restore button state
                 compressBtn.button('reset');
-            });
+            }, 'json');
       };
 
 
