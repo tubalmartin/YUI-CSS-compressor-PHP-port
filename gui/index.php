@@ -65,7 +65,7 @@ if (!empty($_POST)):
     $output['originalSize'] = mb_strlen($_POST['css'], '8bit');
     $output['compressedSize'] = mb_strlen($output['css'], '8bit');
     $output['bytesSaved'] = $output['originalSize'] - $output['compressedSize'];
-    $output['compressionRatio'] = round(($output['bytesSaved'] * 100) / $output['originalSize'], 2);   
+    $output['compressionRatio'] = round(($output['bytesSaved'] * 100) / ($output['originalSize'] === 0 ? 1 : $output['originalSize']), 2);   
 
     // Output data
     echo json_encode($output);
