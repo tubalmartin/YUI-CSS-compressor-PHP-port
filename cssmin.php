@@ -453,10 +453,10 @@ class CSSmin
             }
 
             // Enough searching, start moving stuff over to the buffer
-            $sb[] = $this->substring($css, $append_index, $index);
+            $sb[] = $this->str_slice($css, $append_index, $index);
 
             if ($found_terminator) {
-                $token = $this->substring($css, $start_index, $end_index);
+                $token = $this->str_slice($css, $start_index, $end_index);
                 $token = preg_replace('/\s+/', '', $token);
                 $this->preserved_tokens[] = $token;
 
@@ -466,14 +466,14 @@ class CSSmin
                 $append_index = $end_index + 1;
             } else {
                 // No end terminator found, re-add the whole match. Should we throw/warn here?
-                $sb[] = $this->substring($css, $index, $last_index);
+                $sb[] = $this->str_slice($css, $index, $last_index);
                 $append_index = $last_index;
             }
 
             $offset = $last_index;
         }
 
-        $sb[] = $this->substring($css, $append_index);
+        $sb[] = $this->str_slice($css, $append_index);
 
         return implode('', $sb);
     }
@@ -518,7 +518,7 @@ class CSSmin
             $last_index = $index + strlen($m[0]);
             $is_filter = $m[1] !== null && $m[1] !== '';
 
-            $sb[] = $this->substring($css, $_index, $index);
+            $sb[] = $this->str_slice($css, $_index, $index);
 
             if ($is_filter) {
                 // Restore, maintain case, otherwise filter will break
@@ -540,7 +540,7 @@ class CSSmin
             $_index = $offset = $last_index - strlen($m[8]);
         }
 
-        $sb[] = $this->substring($css, $_index);
+        $sb[] = $this->str_slice($css, $_index);
 
         return implode('', $sb);
     }
@@ -700,38 +700,6 @@ class CSSmin
         $index = strpos($haystack, $needle, $offset);
 
         return ($index !== FALSE) ? $index : -1;
-    }
-
-    /**
-     * PHP port of Javascript's "substring" function
-     * Author: Tubal Martin http://blog.margenn.com
-     * Tests: http://margenn.com/tubal/substring/
-     *
-     * @param string   $str
-     * @param int      $from index
-     * @param int|bool $to index (optional)
-     * @return string
-     */
-    private function substring($str, $from = 0, $to = FALSE)
-    {
-        if ($to !== FALSE) {
-            if ($from == $to || ($from <= 0 && $to < 0)) {
-                return '';
-            }
-
-            if ($from > $to) {
-                $from_copy = $from;
-                $from = $to;
-                $to = $from_copy;
-            }
-        }
-
-        if ($from < 0) {
-            $from = 0;
-        }
-
-        $substring = ($to === FALSE) ? substr($str, $from) : substr($str, $from, $to - $from);
-        return ($substring === FALSE) ? '' : $substring;
     }
 
     /**
