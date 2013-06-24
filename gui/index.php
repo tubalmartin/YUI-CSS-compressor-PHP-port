@@ -86,7 +86,7 @@ else:
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container-fluid">
-            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor - PHP <span class="version">v2.4.7.1</span></a>
+            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor - PHP <span class="version">v2.4.8</span></a>
         </div>
       </div>
     </div>

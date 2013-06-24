@@ -1,5 +1,10 @@
 a {
     border: none;
 }
-b {BACKGROUND:none;OUTLINE:NONE}
-s {border-top: none;}
+b {BACKGROUND:none}
+s {
+    border-top: none;
+    border-right: none;
+    border-bottom:none;
+    border-left: none
+}

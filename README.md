@@ -1,6 +1,6 @@
 # A PHP port of the YUI CSS compressor
 
-This port is based on version 2.4.7 (Sep 26, 2011) of the [YUI compressor](https://github.com/yui/yuicompressor).
+This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https://github.com/yui/yuicompressor).
 
 **Table of Contents**
 
@@ -81,8 +81,7 @@ echo $output_css1 . $output_css2;
 
 ### 2.1. FIXED BUGS still present in the original YUI compressor
 
-* `border-left: none;` gets compressed to `border-left:0`. YUI compressor has a typo in a regular expression. See issue [here](https://github.com/yui/yuicompressor/pull/23).
-* Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove all @charset at-rules.
+* Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove @charset at-rules if single quotes are used `@charset 'utf-8'`.
 * Safer/improved comment removal. YUI compressor would ruin part of the output if the `*` selector is used right after a comment: `a{/* comment 1 */*width:auto;}/* comment 2 */* html .b{height:100px}`. See issues [#2528130](http://yuilibrary.com/projects/yuicompressor/ticket/2528130), [#2528118](http://yuilibrary.com/projects/yuicompressor/ticket/2528118) & [this topic](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
 * `background: none;` is not compressed to `background:0;` anymore. See issue [#2528127](http://yuilibrary.com/projects/yuicompressor/ticket/2528127).
 * `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
@@ -90,6 +89,7 @@ echo $output_css1 . $output_css2;
 * Newlines before and/or after a preserved comment `/*!` are not removed (we leave just 1 newline). YUI removes all newlines making it really hard to spot an important comment.
 * Spaces surrounding the `+` operator in `calc()` calculations are not removed. YUI removes them and that is wrong.
 * Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
+* Fixes for `!important` related issues.
 
 <a name="enhancements"></a>
 
@@ -102,19 +102,17 @@ echo $output_css1 . $output_css2;
     * Added newer unit lengths `ch, rem, vw, vh, vm, vmin` so we can replace `0rem` or `0vw` with `0`.
 * Colors compression:
     * Percentage and negative RGB values are supported i.e. `rgb(100%, 0%, 0%)` gets minified to `red`.
-    * RGB colors outside the sRGB color space (`0 - 255` or `0% - 100%`) are clipped i.e. `rgb(280, -1, -100)` gets minified to `red` because it's the same as `rgb(255, 0, 0)`.
     * HSL colors are compressed too, i.e. `hsl(0, 100%, 50%)` gets minified to `red`. HSL angles are wrapped and values are clipped if needed.
-    * Some colors are compressed to its color name if it's shorter: `#f00` gets minified to `red`.
-* All regular expressions that match text are case insensitive.
+* All CSS properties are lowercased.    
 
 
 <a name="unittests"></a>
 
 ## 3. Unit Tests
 
-Unit tests are updated according to all bug fixes and enhancements made so do not run YUI's original unit tests against this port.
+Unit tests from YUI are not modified to fit this port so that you if a YUI test fails you can see the improvements/fixes this port provides over the original.
 
-**60** unit tests written!!
+**60+** unit tests written!!
 
 How to run the test suite:
 

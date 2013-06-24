@@ -140,7 +140,7 @@ function run_tests()
  */
 function run_my_tests()
 {
-    h("MY TESTS");
+    h("PHP PORT TESTS");
 
     $files = glob(dirname(__FILE__) . '/mine/*.css');
     $skip = array();
@@ -157,7 +157,7 @@ function run_my_tests()
  */
 function run_yahoo_tests()
 {
-    h("YAHOO! TESTS");
+    h("YAHOO! ORIGINAL TESTS");
 
     $files = glob(dirname(__FILE__) . '/yui/*.css');
     $skip = array();
@@ -174,7 +174,7 @@ function run_yahoo_tests()
  */
 function run_microsoft_tests()
 {
-    h("MICROSOFT TESTS");
+    h("MICROSOFT ORIGINAL TESTS");
 
     $files = glob(dirname(__FILE__) . '/microsoft-ajaxmin/Input/*/*.css');
     $skip = array(
