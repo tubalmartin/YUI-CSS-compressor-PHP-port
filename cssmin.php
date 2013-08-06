@@ -336,6 +336,10 @@ class CSSmin
         // Replace 0 length units 0(px,em,%) with 0.
         $css = preg_replace('/(^|[^0-9])(?:0?\.)?0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%|deg|g?rad|m?s|k?hz)/iS', '${1}0', $css);
 
+        // Fix for issue: #7
+        // Replace *keyframe 0{ with *keyframe 0%{
+        $css = preg_replace('/(keyframe.*?){0{/iS', '$1{0%{', $css);
+
         // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
         $css = preg_replace('/\:0(?: 0){1,3}(;|\}| \!)/', ':0$1', $css);
 
