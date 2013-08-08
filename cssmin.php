@@ -2,10 +2,10 @@
 
 /*!
  * cssmin.php rev ebaf67b 12/06/2013
- * Author: Tubal Martin - http://blog.margenn.com/
+ * Author: Tubal Martin - http://tubalmartin.me/
  * Repo: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port
  *
- * This is a PHP port of the CSS minification tool distributed with YUICompressor, 
+ * This is a PHP port of the CSS minification tool distributed with YUICompressor,
  * itself a port of the cssmin utility by Isaac Schlueter - http://foohack.com/
  * Permission is hereby granted to use the PHP version under the same
  * conditions as the YUICompressor.
@@ -289,7 +289,7 @@ class CSSmin
         // But, be careful not to turn "p :link {...}" into "p:link{...}"
         // Swap out any pseudo-class colons with the token, and then swap back.
         $css = preg_replace_callback('/(?:^|\})(?:(?:[^\{\:])+\:)+(?:[^\{]*\{)/', array($this, 'replace_colon'), $css);
-        
+
         // Remove spaces before the things that should not have spaces before them.
         $css = preg_replace('/\s+([\!\{\}\;\:\>\+\(\)\]\~\=,])/', '$1', $css);
 
@@ -317,7 +317,7 @@ class CSSmin
         // lower case some common function that can be values
         // NOTE: rgb() isn't useful as we replace with #hex later, as well as and() is already done for us
         $css = preg_replace_callback('/([:,\( ]\s*)(attr|color-stop|from|rgba|to|url|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?(?:calc|max|min|(?:repeating-)?(?:linear|radial)-gradient)|-webkit-gradient)/iS', array($this, 'lowercase_common_functions_values'), $css);
-        
+
         // Put the space back in some cases, to support stuff like
         // @media screen and (-webkit-min-device-pixel-ratio:0){
         $css = preg_replace('/\band\(/i', 'and (', $css);
@@ -335,6 +335,9 @@ class CSSmin
 
         // Replace 0 length units 0(px,em,%) with 0.
         $css = preg_replace('/(^|[^0-9])(?:0?\.)?0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%|deg|g?rad|m?s|k?hz)/iS', '${1}0', $css);
+
+		// 0% step in a keyframe? restore the % unit
+		$css = preg_replace('/(@[a-z\-]*?keyframes.*?)0\{/iS', '${1}0%{', $css);
 
         // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
         $css = preg_replace('/\:0(?: 0){1,3}(;|\}| \!)/', ':0$1', $css);
@@ -638,22 +641,22 @@ class CSSmin
         return ':first-'. strtolower($matches[1]) .' '. $matches[2];
     }
 
-    private function lowercase_directives($matches) 
+    private function lowercase_directives($matches)
     {
         return '@'. strtolower($matches[1]);
     }
 
-    private function lowercase_pseudo_elements($matches) 
+    private function lowercase_pseudo_elements($matches)
     {
         return ':'. strtolower($matches[1]);
     }
 
-    private function lowercase_common_functions($matches) 
+    private function lowercase_common_functions($matches)
     {
         return ':'. strtolower($matches[1]) .'(';
     }
 
-    private function lowercase_common_functions_values($matches) 
+    private function lowercase_common_functions_values($matches)
     {
         return $matches[1] . strtolower($matches[2]);
     }

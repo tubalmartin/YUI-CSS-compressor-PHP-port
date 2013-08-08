@@ -11,7 +11,7 @@ This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https
 3.  [Unit Tests](#unittests)
 4.  [API Reference](#api)
 5.  [Who uses this?](#whousesit)
-6.  [TODOs](#todos)
+6.  [Changelog](#changelog)
 
 <a name="howtouse"></a>
 
@@ -90,6 +90,7 @@ echo $output_css1 . $output_css2;
 * Spaces surrounding the `+` operator in `calc()` calculations are not removed. YUI removes them and that is wrong.
 * Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
 * Fixes for `!important` related issues.
+* Fixes @keyframes 0% step bug.
 
 <a name="enhancements"></a>
 
@@ -103,7 +104,7 @@ echo $output_css1 . $output_css2;
 * Colors compression:
     * Percentage and negative RGB values are supported i.e. `rgb(100%, 0%, 0%)` gets minified to `red`.
     * HSL colors are compressed too, i.e. `hsl(0, 100%, 50%)` gets minified to `red`. HSL angles are wrapped and values are clipped if needed.
-* All CSS properties are lowercased.    
+* All CSS properties are lowercased.
 
 
 <a name="unittests"></a>
@@ -226,10 +227,11 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 * [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
 
+<a name="changelog"></a>
 
+## 6. Changelog
 
-<a name="todos"></a>
-## 6. TODOs
+### 2.4.8-1 8 Aug 2013
 
-* Some shorthand optimizations
-* Even better colors compression
+* Fix for the @keyframes 0% step bug. Tests added.
+* LESS compiler upgraded to version 1.4.1

@@ -65,7 +65,7 @@ if (!empty($_POST)):
     $output['originalSize'] = mb_strlen($_POST['css'], '8bit');
     $output['compressedSize'] = mb_strlen($output['css'], '8bit');
     $output['bytesSaved'] = $output['originalSize'] - $output['compressedSize'];
-    $output['compressionRatio'] = round(($output['bytesSaved'] * 100) / ($output['originalSize'] === 0 ? 1 : $output['originalSize']), 2);   
+    $output['compressionRatio'] = round(($output['bytesSaved'] * 100) / ($output['originalSize'] === 0 ? 1 : $output['originalSize']), 2);
 
     // Output data
     echo json_encode($output);
@@ -86,7 +86,7 @@ else:
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container-fluid">
-            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor - PHP <span class="version">v2.4.8</span></a>
+            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor - PHP <span class="version">v2.4.8-1</span></a>
         </div>
       </div>
     </div>
@@ -116,7 +116,7 @@ else:
                         <legend>LESS</legend>
                         <p class="control-group">
                             <label class="checkbox">
-                                <input type="checkbox" id="enable-less" value="1"> Enable compiler <span class="version">v1.3.0</span>
+                                <input type="checkbox" id="enable-less" value="1"> Enable compiler <span class="version">v1.4.1</span>
                             </label>
                         </p>
                     </fieldset>
@@ -170,7 +170,7 @@ else:
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="third-party/less-1.3.0.min.js"></script>
+    <script type="text/javascript" src="third-party/less-1.4.1.min.js"></script>
     <script type="text/javascript" src="third-party/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="third-party/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="scripts.js"></script>

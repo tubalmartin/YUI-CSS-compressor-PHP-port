@@ -63,6 +63,6 @@ pre {
 /* APP styles */
 .version{font-size:10px;font-style: italic;letter-spacing: 2px}
 
-legend{font-size: 15px; line-height: 20px;}
+legend{font-size: 15px; line-height: 20px; margin-bottom:0}
 .control-group{margin-bottom:12px;}
 #output-container{margin-top:18px}

@@ -18,12 +18,12 @@ $(function(){
               ,	template = '<li><label>{line}</label><pre class="{class}">{content}</pre></li>'
               , error = [];
 
-            content = '<h3>'  + (e.message || 'There is an error in your .less file') +
+            content = '<h3>'  + (e.type || "Syntax") + "Error: " + (e.message || 'There is an error in your .less file') +
                       '</h3>' + '<p>';
 
             errorline = function (e, i, classname) {
-                if (e.extract[i]) {
-                    error.push(template.replace(/\{line\}/, parseInt(e.line) + (i - 1))
+                if (e.extract[i] != undefined) {
+                    error.push(template.replace(/\{line\}/, (parseInt(e.line) || 0) + (i - 1))
                                        .replace(/\{class\}/, classname)
                                        .replace(/\{content\}/, e.extract[i]));
                 }
@@ -58,7 +58,7 @@ $(function(){
                 compressionRatio.html(data.compressionRatio);
 
                 outputContainer.slideDown('fast');
-                
+
                 // Restore button state
                 compressBtn.button('reset');
             }, 'json');
