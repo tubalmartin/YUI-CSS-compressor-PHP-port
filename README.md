@@ -231,6 +231,13 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### 2.4.8-2 13 Nov 2013
+
+* Chunk length reduced to 5000 chars (prevu¡iously 25.000 chars) in an effort to avoid PCRE backtrack limits (needs feedback).
+* Improvements for the @keyframes 0% step bug. Tests improved.
+* Fix IE7 issue on matrix filters which browser accept whitespaces between Matrix parameters
+* LESS compiler upgraded to version 1.4.2
+
 ### 2.4.8-1 8 Aug 2013
 
 * Fix for the @keyframes 0% step bug. Tests added.
