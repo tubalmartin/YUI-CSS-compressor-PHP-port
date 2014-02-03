@@ -90,7 +90,7 @@ class CSSmin
         }
 
         // preserve strings so their content doesn't get accidentally minified
-        $css = preg_replace_callback('/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S", array($this, 'replace_string'), $css);
+        $css = preg_replace_callback('/(?:"(?:[^\\\\";}]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\';}]|\\\\.|\\\\)*')/S", array($this, 'replace_string'), $css);
 
         // Let's divide css code in chunks of 5.000 chars aprox.
         // Reason: PHP's PCRE functions like preg_replace have a "backtrack limit"
@@ -337,7 +337,7 @@ class CSSmin
         $css = preg_replace('/(\*[a-z0-9\-]+\s*\:[^;\}]+)(\})/', '$1;$2', $css);
 
         // Replace 0 length units 0(px,em,%) with 0.
-        $css = preg_replace('/(^|[^0-9])(?:0?\.)?0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%|deg|g?rad|m?s|k?hz)/iS', '${1}0', $css);
+        $css = preg_replace('/(^|[^0-9]):(?:0?\.)?0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%|deg|g?rad|m?s|k?hz)/iS', '${1}:0', $css);
 
 		// 0% step in a keyframe? restore the % unit
 		$css = preg_replace_callback('/(@[a-z\-]*?keyframes[^\{]*?\{)(.*?\}\s*\})/iS', array($this, 'replace_keyframe_zero'), $css);
