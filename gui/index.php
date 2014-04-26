@@ -81,12 +81,13 @@ else:
     <title>YUI CSS compressor - PHP</title>
     <link rel="stylesheet" type="text/css" href="third-party/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet/less" type="text/css" href="styles.less">
 </head>
 <body>
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container-fluid">
-            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor - PHP <span class="version">v2.4.8-2</span></a>
+            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor - PHP <span class="version">v2.4.8-3</span></a>
         </div>
       </div>
     </div>
@@ -116,7 +117,7 @@ else:
                         <legend>LESS</legend>
                         <p class="control-group">
                             <label class="checkbox">
-                                <input type="checkbox" id="enable-less" value="1"> Enable compiler <span class="version">v1.4.2</span>
+                                <input type="checkbox" id="enable-less" value="1"> Enable compiler <span class="version">v1.7.0</span>
                             </label>
                         </p>
                     </fieldset>
@@ -170,7 +171,12 @@ else:
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="third-party/less-1.4.2.min.js"></script>
+    <script type="text/javascript">
+        less = {
+            env: 'development'
+        };
+    </script>
+    <script type="text/javascript" src="third-party/less-1.7.0.min.js"></script>
     <script type="text/javascript" src="third-party/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="third-party/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="scripts.js"></script>

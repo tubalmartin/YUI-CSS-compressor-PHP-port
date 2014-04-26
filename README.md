@@ -91,6 +91,8 @@ echo $output_css1 . $output_css2;
 * Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
 * Fixes for `!important` related issues.
 * Fixes @keyframes 0% step bug.
+* Some units should not be removed when the value is 0, such as `0s` or `0ms`.
+* Fixes replacing 0 length values in selectors such as `.span0px { ... }`.
 
 <a name="enhancements"></a>
 
@@ -226,10 +228,17 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 
 * [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
+* [Autoptimize](http://wordpress.org/plugins/autoptimize/) is a Wordpress plugin. Autoptimize speeds up your website and helps you save bandwidth by aggregating and minimizing JS, CSS and HTML.
+* [IMPRESSPAGES](http://www.impresspages.org/) PHP framework with content editor.
 
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### 2.4.8-3 26 Apr 2014
+
+* Fixed all reported bugs: See issues #11, #13 (first case only) and #14.
+* LESS compiler upgraded to version 1.7.0
 
 ### 2.4.8-2 13 Nov 2013
 

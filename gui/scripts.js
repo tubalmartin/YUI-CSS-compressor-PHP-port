@@ -82,15 +82,20 @@ $(function(){
 
         // If LESS enabled, precompile CSS with LESS and then compress
         if (!!$('#enable-less:checked').val()) {
-            new(less.Parser)().parse(data.css, function (e, tree) {
-                if (e) {
-                    lessError(e);
-                    compressBtn.button('reset');
-                } else {
-                    data.css = tree.toCSS();
-                    compress(data);
-                }
-            });
+            try {
+              new(less.Parser)().parse(data.css, function (err, tree) {
+                  if (err) {
+                      lessError(err);
+                      compressBtn.button('reset');
+                  } else {
+                      data.css = tree.toCSS();
+                      compress(data);
+                  }
+              });
+            } catch (err) {
+              lessError(err);
+              compressBtn.button('reset');
+            }
         } else {
             compress(data);
         }
