@@ -16,3 +16,6 @@
 	50% { opacity: 50 }
     100%, 0% { opacity: 0; }
 }
+@-webkit-keyframes test4{
+    0% { transform: rotate3d(0,0,1,30deg); }
+}
