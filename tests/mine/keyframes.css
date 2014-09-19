@@ -18,4 +18,5 @@
 }
 @-webkit-keyframes test4{
     0% { transform: rotate3d(0,0,1,30deg); }
+    100% { transform: rotate3d(0,0,1,10deg); }
 }

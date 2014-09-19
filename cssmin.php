@@ -598,7 +598,7 @@ class CSSmin
 
 	private function replace_keyframe_zero($matches)
     {
-        return $matches[1] . preg_replace('/0(\{|,[^\{]+\{)/', '0%$1', $matches[2]) . $matches[3];
+        return $matches[1] . preg_replace('/0(\{|,[^\)\{]+\{)/', '0%$1', $matches[2]) . $matches[3];
     }
 
     private function rgb_to_hex($matches)
