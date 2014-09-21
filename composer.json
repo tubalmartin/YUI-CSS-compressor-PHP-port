@@ -6,9 +6,8 @@
     "license": "BSD-3-Clause",
     "authors": [
         {
-            "name": "Tubal Martin",
-            "homepage": "http://blog.margenn.com/",
-            "role": "Developer"
+            "name": "Túbal Martín",
+            "homepage": "http://tubalmartin.me/"
         }
     ],
     "support": {
@@ -19,6 +18,6 @@
         "classmap": ["cssmin.php"]
     },
     "require": {
-        "php": ">=5.0.0"
+        "php": ">=4.3.0"
     }
 }
