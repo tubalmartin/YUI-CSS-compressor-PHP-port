@@ -73,6 +73,16 @@ $output_css2 = $compressor->run($input_css2, 2000);
 echo $output_css1 . $output_css2;
 ```
 
+You can also use [Composer](http://getcomposer.org/) to install and autoload the compressor library:
+
+    $ composer.phar require tubalmartin/cssmin
+
+After which the library would be loaded with all the other Composer packages when you include Composer's autoloader file:
+
+```php
+require './vendor/autoload.php';
+```
+
 <a name="onasteroids"></a>
 
 ## 2. YUI compressor on asteroids!
