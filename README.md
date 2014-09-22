@@ -129,7 +129,7 @@ Unit tests from YUI are not modified to fit this port so that you if a YUI test 
 
 How to run the test suite:
 
-* You need a server with PHP 4.3+ installed (preferrably PHP 5).
+* You need a server with PHP 5.0.0+ installed.
 * Download the repository and upload it to a folder in your server.
 * Open your favourite browser and enter the URL to the file `tests/run.php`.
 
