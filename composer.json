@@ -18,6 +18,6 @@
         "classmap": ["cssmin.php"]
     },
     "require": {
-        "php": ">=4.3.0"
+        "php": ">=5.0.0"
     }
 }
