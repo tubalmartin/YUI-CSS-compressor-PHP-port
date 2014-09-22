@@ -29,7 +29,7 @@ GUI features:
 
 How to use the GUI:
 
-* You need a server with PHP 4.3+ installed (preferrably PHP 5).
+* You need a server with PHP 5.0.0+ installed.
 * Download the repository and upload it to your server.
 * Open your favourite browser and enter the URL to the `/gui` folder.
 
@@ -244,6 +244,11 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### v2.4.8-4 22 Sep 2014
+
+* Composer support. The package is [tubalmartin/cssmin](https://packagist.org/packages/tubalmartin/cssmin)
+* Fixed issue #17
 
 ### 2.4.8-3 26 Apr 2014
 
