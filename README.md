@@ -248,21 +248,26 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 ### v2.4.8-4 22 Sep 2014
 
 * Composer support. The package is [tubalmartin/cssmin](https://packagist.org/packages/tubalmartin/cssmin)
-* Fixed issue #17
+* Fixed issue [#17][]
 
 ### 2.4.8-3 26 Apr 2014
 
-* Fixed all reported bugs: See issues #11, #13 (first case only) and #14.
+* Fixed all reported bugs: See issues [#11][], [#13][] (first case only) and [#14][].
 * LESS compiler upgraded to version 1.7.0
 
 ### 2.4.8-2 13 Nov 2013
 
 * Chunk length reduced to 5000 chars (previously 25.000 chars) in an effort to avoid PCRE backtrack limits (needs feedback).
-* Improvements for the @keyframes 0% step bug. Tests improved.
+* Improvements for the `@keyframes 0%` step bug. Tests improved.
 * Fix IE7 issue on matrix filters which browser accept whitespaces between Matrix parameters
 * LESS compiler upgraded to version 1.4.2
 
 ### 2.4.8-1 8 Aug 2013
 
-* Fix for the @keyframes 0% step bug. Tests added.
+* Fix for the `@keyframes 0%` step bug. Tests added.
 * LESS compiler upgraded to version 1.4.1
+
+[#11]: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/11
+[#13]: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/13
+[#14]: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/14
+[#17]: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/17
