@@ -598,7 +598,7 @@ class CSSmin
         $this->preserved_tokens[] = trim($matches[1]);
         return 'flex:'.self::TOKEN . (count($this->preserved_tokens) - 1) . '___';
     }
-    
+
     private function preserve_old_IE_specific_matrix_definition($matches)
     {
 	$this->preserved_tokens[] = $matches[1];
