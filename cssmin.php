@@ -469,8 +469,8 @@ class CSSmin
 
             if ($found_terminator) {
                 $token = $this->str_slice($css, $start_index, $end_index);
-                // remove whitespace, except if $token contains svg, which needs whitepace left as is
-                if (strpos($token,"<svg")===false && strpos($token,'svg+xml')===false) {
+                // remove whitespace, except if $token contains <svg, which needs whitepace left as is
+                if (strpos($token,"<svg")===false) {
 	                $token = preg_replace('/\s+/', '', $token);
                 }
                 $this->preserved_tokens[] = $token;
