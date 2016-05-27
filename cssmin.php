@@ -590,7 +590,7 @@ class CSSmin
 
     private function replace_calc($matches)
     {
-        $this->preserved_tokens[] = trim($matches[2]);
+        $this->preserved_tokens[] = trim(preg_replace('/\s*([\*\/\(\),])\s*/', '$1', $matches[2]));
         return 'calc('. self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
     }
 
