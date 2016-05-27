@@ -599,10 +599,10 @@ class CSSmin
         return 'flex:'.self::TOKEN . (count($this->preserved_tokens) - 1) . '___';
     }
 
-    private function preserve_old_IE_specific_matrix_definition($matches)
-    {
-	$this->preserved_tokens[] = $matches[1];
-	return 'filter:progid:DXImageTransform.Microsoft.Matrix(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
+	private function preserve_old_IE_specific_matrix_definition($matches)
+	{
+		$this->preserved_tokens[] = $matches[1];
+		return 'filter:progid:DXImageTransform.Microsoft.Matrix(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
     }
 
 	private function replace_keyframe_zero($matches)
