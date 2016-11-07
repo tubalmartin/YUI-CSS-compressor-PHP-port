@@ -1,0 +1,1 @@
+.col{max-width:100%;-webkit-flex:1 1 0%;-moz-flex:1 1 0%;-ms-flex:1 1 0%;flex:1 1 0%;padding:12px}
