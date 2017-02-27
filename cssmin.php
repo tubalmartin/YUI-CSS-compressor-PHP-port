@@ -1,7 +1,7 @@
 <?php
 
 /*!
- * cssmin.php v2.4.8-4
+ * cssmin.php v2.4.8-5
  * Author: Tubal Martin - http://tubalmartin.me/
  * Repo: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port
  *
@@ -707,7 +707,7 @@ class CSSmin
 
     /**
      * PHP port of Javascript's "indexOf" function for strings only
-     * Author: Tubal Martin http://blog.margenn.com
+     * Author: Tubal Martin
      *
      * @param string $haystack
      * @param string $needle
@@ -723,8 +723,7 @@ class CSSmin
 
     /**
      * PHP port of Javascript's "slice" function for strings only
-     * Author: Tubal Martin http://blog.margenn.com
-     * Tests: http://margenn.com/tubal/str_slice/
+     * Author: Tubal Martin
      *
      * @param string   $str
      * @param int      $start index
@@ -768,9 +767,9 @@ class CSSmin
             $letter = substr($size, -1);
             $size = intval($size);
             switch ($letter) {
-                case 'M': case 'm': return $size * 1048576;
-                case 'K': case 'k': return $size * 1024;
-                case 'G': case 'g': return $size * 1073741824;
+                case 'M': case 'm': return (int) $size * 1048576;
+                case 'K': case 'k': return (int) $size * 1024;
+                case 'G': case 'g': return (int) $size * 1073741824;
             }
         }
         return (int) $size;
