@@ -247,7 +247,7 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ### v2.4.8-p6 21 Mar 2017
 
-* Fixed PHP CLI issues. See [#36][]
+* Fixed PHP CLI issues. See #36
 
 ### v2.4.8-p5 27 Feb 2017
 
@@ -260,7 +260,7 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ### v2.4.8-p3 26 Apr 2014
 
-* Fixed all reported bugs: See issues [#11][], [#13][] (first case only) and [#14][].
+* Fixed all reported bugs: See issues [#11], [#13] (first case only) and [#14][].
 * LESS compiler upgraded to version 1.7.0
 
 ### v2.4.8-p2 13 Nov 2013
