@@ -245,6 +245,10 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v2.4.8-p6 21 Mar 2017
+
+* Fixed PHP CLI issues. See [#36][]
+
 ### v2.4.8-p5 27 Feb 2017
 
 * Fixed PHP 7 issues.
