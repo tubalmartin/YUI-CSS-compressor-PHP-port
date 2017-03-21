@@ -200,10 +200,20 @@ class CSSmin
         // If current settings are higher respect them.
         foreach ($php_limits as $name => $suggested) {
             $current = $this->normalize_int(ini_get($name));
-            // memory_limit exception: allow -1 for "no memory limit".
-            if ($current > -1 && ($suggested == -1 || $current < $suggested)) {
-                ini_set($name, $suggested);
+            if ($current > $suggested) {
+                continue;
             }
+            
+            // memory_limit exception: allow -1 for "no memory limit".
+            if ($name === "memory_limit" && $current === -1) {
+                continue;
+            }
+            // max_execution_time exception: allow 0 for "no memory limit".
+            if ($name === "max_execution_time" && $current === 0) {
+                continue;
+            }
+            
+            ini_set($name, $suggested);
         }
     }
 
