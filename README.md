@@ -227,7 +227,7 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ### v2.4.8-p7 26 Mar 2017
 
-* Fixed many bugs ([#20], [#22], [#24], [#25], [#26]) reported by contributors and others that I'm sure haven't been reported, at least yet. Sorry for the long delay guys.
+* Fixed many issues [#20], [#22], [#24], [#25], [#26] reported by contributors and others that I'm sure haven't been reported, at least yet. Sorry for the long delay guys.
 * This release is all about stability and reliability and as such I've had to take some controversial decisions such as:
    * Not minifying `none` property value to `0` because in some subtle scenarios the resulting output may render some styles differently.
    * Not removing units from zero length values because in many cases the output will break the intended behavior. Patching every single case after someone finds a new breaking case is not good IMHO taking into account CSS is a live spec and browsers differ in some cases.
