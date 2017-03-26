@@ -1,4 +1,0 @@
-.color_chip {
-    color: hsla(27, 0%, 50%, 1);
-    background: rgba(195, 198, 214, 0.85);
-}

@@ -1,7 +1,7 @@
 <?php
 
 /*!
- * cssmin.php v2.4.8-5
+ * cssmin.php
  * Author: Tubal Martin - http://tubalmartin.me/
  * Repo: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port
  *
@@ -346,25 +346,11 @@ class CSSmin
         // to avoid issues on Symbian S60 3.x browsers.
         $css = preg_replace('/(\*[a-z0-9\-]+\s*\:[^;\}]+)(\})/', '$1;$2', $css);
 
-        // Replace 0 <length> and 0 <percentage> values with 0.
-        // <length> data type: https://developer.mozilla.org/en-US/docs/Web/CSS/length
-        // <percentage> data type: https://developer.mozilla.org/en-US/docs/Web/CSS/percentage
-        $css = preg_replace('/([^\\\\]\:|\s)0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%)/iS', '${1}0', $css);
+        // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0 for safe properties only.
+        $css = preg_replace('/(margin|padding)\:0%?(?: 0%?){1,3}(;|\}| \!)/i', '$1:0$2', $css);
 
-		// 0% step in a keyframe? restore the % unit
-		$css = preg_replace_callback('/(@[a-z\-]*?keyframes[^\{]+\{)(.*?)(\}\})/iS', array($this, 'replace_keyframe_zero'), $css);
-
-        // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
-        $css = preg_replace('/\:0(?: 0){1,3}(;|\}| \!)/', ':0$1', $css);
-
-        // Fix for issue: #2528142
-        // Replace text-shadow:0; with text-shadow:0 0 0;
-        $css = preg_replace('/(text-shadow\:0)(;|\}| \!)/i', '$1 0 0$2', $css);
-
-        // Replace background-position:0; with background-position:0 0;
-        // same for transform-origin
-        // Changing -webkit-mask-position: 0 0 to just a single 0 will result in the second parameter defaulting to 50% (center)
-        $css = preg_replace('/(background\-position|webkit-mask-position|(?:webkit|moz|o|ms|)\-?transform\-origin)\:0(;|\}| \!)/iS', '$1:0 0$2', $css);
+        // Replace 0 0 0 0; with 0 0 for safe properties only.
+        $css = preg_replace('/(background\-position)\:0%?(?: 0%?){1,3}(;|\}| \!)/i', '$1:0 0$2', $css);
 
         // Shorten colors from rgb(51,102,153) to #336699, rgb(100%,0%,0%) to #ff0000 (sRGB color space)
         // Shorten colors from hsl(0, 100%, 50%) to #ff0000 (sRGB color space)
@@ -374,9 +360,6 @@ class CSSmin
 
         // Shorten colors from #AABBCC to #ABC or short color name.
         $css = $this->compress_hex_colors($css);
-
-        // border: none to border:0, outline: none to outline:0
-        $css = preg_replace('/(border\-?(?:top|right|bottom|left|)|outline)\:none(;|\}| \!)/iS', '$1:0$2', $css);
 
         // shorter opacity IE filter
         $css = preg_replace('/progid\:DXImageTransform\.Microsoft\.Alpha\(Opacity\=/i', 'alpha(opacity=', $css);
@@ -475,8 +458,9 @@ class CSSmin
 
             if ($found_terminator) {
                 $token = $this->str_slice($css, $start_index, $end_index);
-                $token = preg_replace('/\s+/', '', $token);
-                $this->preserved_tokens[] = $token;
+                // Remove all spaces only for base64 encoded URLs.
+                $token = preg_replace_callback('/.+base64,.+/s', array($this, 'remove_data_urls_spaces'), $token);
+                $this->preserved_tokens[] = trim($token);
 
                 $preserver = 'url(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___)';
                 $sb[] = $preserver;
@@ -567,6 +551,11 @@ class CSSmin
      * ---------------------------------------------------------------------------------------------
      */
 
+    private function remove_data_urls_spaces($matches)
+    {
+        return preg_replace('/\s+/', '', $matches[0]);
+    }
+
     private function replace_string($matches)
     {
         $match = $matches[0];
@@ -596,7 +585,7 @@ class CSSmin
 
     private function replace_calc($matches)
     {
-        $this->preserved_tokens[] = trim(preg_replace('/\s*([\*\/\(\),])\s*/', '$1', $matches[2]));
+        $this->preserved_tokens[] = preg_replace('/\)([\+\-]{1})/',') $1',preg_replace('/([\+\-]{1})\(/','$1 (',trim(preg_replace('/\s*([\*\/\(\),])\s*/', '$1', $matches[2]))));
         return 'calc('. self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
     }
 
@@ -604,11 +593,6 @@ class CSSmin
 	{
 		$this->preserved_tokens[] = $matches[1];
 		return 'filter:progid:DXImageTransform.Microsoft.Matrix(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
-    }
-
-	private function replace_keyframe_zero($matches)
-    {
-        return $matches[1] . preg_replace('/0(\{|,[^\)\{]+\{)/', '0%$1', $matches[2]) . $matches[3];
     }
 
     private function rgb_to_hex($matches)

@@ -3,6 +3,8 @@ a{
 	margin:-.0em .000pc +0px -00.0000%;
     transition-duration: 0s;
     left: -20.0px;
+    padding: 0 0 0 0;
+    margin: 0 0 0;
 }
 b{
 	leading: 0050% -0010.5% 001.004in -0.45vw;
@@ -12,6 +14,7 @@ b{
     pitch: 0KHZ;
     pitch:
         0hz; /* intentionally on next line */
+    padding: 0 0;
 }
 body
 {

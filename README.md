@@ -5,9 +5,7 @@ This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https
 **Table of Contents**
 
 1.  [How to use](#howtouse)
-2.  [YUI compressor on asteroids!](#onasteroids)
-    1.  [Bugs fixed](#bugsfixed)
-    2.  [Enhancements](#enhancements)
+2.  [YUI compressor fixed bugs](#bugsfixed)
 3.  [Unit Tests](#unittests)
 4.  [API Reference](#api)
 5.  [Who uses this?](#whousesit)
@@ -83,13 +81,9 @@ After which the library would be loaded with all the other Composer packages whe
 require './vendor/autoload.php';
 ```
 
-<a name="onasteroids"></a>
-
-## 2. YUI compressor on asteroids!
-
 <a name="bugsfixed"></a>
 
-### 2.1. FIXED BUGS still present in the original YUI compressor
+## 2. FIXED BUGS still present in the original YUI compressor
 
 * Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove @charset at-rules if single quotes are used `@charset 'utf-8'`.
 * Safer/improved comment removal. YUI compressor would ruin part of the output if the `*` selector is used right after a comment: `a{/* comment 1 */*width:auto;}/* comment 2 */* html .b{height:100px}`. See issues [#2528130](http://yuilibrary.com/projects/yuicompressor/ticket/2528130), [#2528118](http://yuilibrary.com/projects/yuicompressor/ticket/2528118) & [this topic](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
@@ -103,21 +97,7 @@ require './vendor/autoload.php';
 * Fixes @keyframes 0% step bug.
 * Some units should not be removed when the value is 0, such as `0s` or `0ms`.
 * Fixes replacing 0 length values in selectors such as `.span0px { ... }`.
-
-<a name="enhancements"></a>
-
-### 2.2. ENHANCEMENTS over the original YUI compressor
-
-* Numbers & units compression:
-    * Sign is removed from positive numbers: `+2em` gets minified to `2em`.
-    * Leading and trailing zeros are removed: `0.2em` gets minified to `.2em`, `-01.010%` to `-1.01%`, `-9.0` to `-9`.
-    * Zero length numbers & units are replaced with `0`: `-0.00%`, `.0em`, `0.0000`, `-0px` get minified to `0`.
-    * Added newer unit lengths `ch, rem, vw, vh, vm, vmin` so we can replace `0rem` or `0vw` with `0`.
-* Colors compression:
-    * Percentage and negative RGB values are supported i.e. `rgb(100%, 0%, 0%)` gets minified to `red`.
-    * HSL colors are compressed too, i.e. `hsl(0, 100%, 50%)` gets minified to `red`. HSL angles are wrapped and values are clipped if needed.
-* All CSS properties are lowercased.
-
+* And some more...
 
 <a name="unittests"></a>
 
@@ -236,7 +216,7 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 5. Who uses this port
 
-* [Magento](https://magento.com/)
+* [Magento](https://magento.com/) eCommerce platforms and solutions for selling online.
 * [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
 * [Autoptimize](http://wordpress.org/plugins/autoptimize/) is a Wordpress plugin. Autoptimize speeds up your website and helps you save bandwidth by aggregating and minimizing JS, CSS and HTML.
 * [IMPRESSPAGES](http://www.impresspages.org/) PHP framework with content editor.
@@ -245,6 +225,14 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v2.4.8-p7 26 Mar 2017
+
+* Fixed many bugs ([#20], [#22], [#24], [#25], [#26]) reported by contributors and others that I'm sure haven't been reported, at least yet. Sorry for the long delay guys.
+* This release is all about stability and reliability and as such I've had to take some controversial decisions such as:
+   * Not minifying `none` property value to `0` because in some subtle scenarios the resulting output may render some styles differently.
+   * Not removing units from zero length values because in many cases the output will break the intended behavior. Patching every single case after someone finds a new breaking case is not good IMHO taking into account CSS is a live spec and browsers differ in some cases.
+* Hope you agree with me removing those conflicting parts. Enjoy this release :)
+   
 ### v2.4.8-p6 21 Mar 2017
 
 * Fixed PHP CLI issues. See [#36](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/pull/36)

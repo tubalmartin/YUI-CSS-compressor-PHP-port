@@ -71,7 +71,7 @@ function get_expected($file)
 /**
  * Prints a test result
  */
-function test($file, $minExpected, $skip)
+function test($file, $minExpected, $skip = array())
 {
     global $cssmin;
 
@@ -124,11 +124,15 @@ function run_tests()
         </style>
     </head>
     <body>
-    <h1>YUI CSS compressor PHP - Test suites</h1>
+    <h1>YUI CSS compressor PHP - Test suite</h1>
 <?php
-    run_my_tests();
-    run_yahoo_tests();
-    //run_microsoft_tests();
+    $test_name = isset($_GET['test']) ? trim($_GET['test']) : null;
+
+    if (empty($test_name)) {
+        run_test_suite();
+    } else {
+        run_test($test_name);
+    }
 ?>
     </body>
     </html>
@@ -136,13 +140,31 @@ function run_tests()
 }
 
 /**
- * Starts my test suite
+ * Runs only one test
  */
-function run_my_tests()
+function run_test($test_name)
 {
-    h("PHP PORT TESTS");
+    h($test_name . ' TEST');
 
+    $file = dirname(__FILE__) . '/mine/' . $test_name . '.css';
+
+    if (!file_exists($file)) {
+        $file = dirname(__FILE__) . '/yui/' . $test_name . '.css';
+    }
+
+    if ($expected = get_expected($file . '.min')) {
+        test($file, $expected);
+    }
+}
+
+
+/**
+ * Runs complete test suite
+ */
+function run_test_suite()
+{
     $files = glob(dirname(__FILE__) . '/mine/*.css');
+    $files = array_merge($files, glob(dirname(__FILE__) . '/yui/*.css'));
     $skip = array();
 
     foreach ($files as $file) {
@@ -151,52 +173,6 @@ function run_my_tests()
         }
     }
 }
-
-/**
- * Starts Yahoo!'s test suite
- */
-function run_yahoo_tests()
-{
-    h("YAHOO! ORIGINAL TESTS");
-
-    $files = glob(dirname(__FILE__) . '/yui/*.css');
-    $skip = array();
-
-    foreach ($files as $file) {
-        if ($expected = get_expected($file . '.min')) {
-            test($file, $expected, $skip);
-        }
-    }
-}
-
-/**
- * Starts Microsoft's test suite
- */
-function run_microsoft_tests()
-{
-    h("MICROSOFT ORIGINAL TESTS");
-
-    $files = glob(dirname(__FILE__) . '/microsoft-ajaxmin/Input/*/*.css');
-    $skip = array(
-        //'Media.css', // YUI lowercases the "AND", it's fine!
-        //'Other.css', // YUI removes unnecessary semicolons so it's fine!
-        //'CSS3.css', // YUI removes empty rules, it's fine!
-        //'ParsingErrors.css', // YUI does not parse errors
-        //'IEhacks.css', // YUI inserts ; if the * hack is used and it's the last property in a block so it's fine!
-        //'HideFromMacIE.css', // YUI removes the space in /* \*/, but it's fine!
-        //'ImportantCommentHacks.css', // YUI removes the space in /* \*/, but it's fine!
-        //'Simple.css', // YUI minifies border:none; to border:0; so it's fine!
-        //'Term.css', // My port removes the + sign of positive signed numbers, so it's fine!
-        //'ValueReplacement.css' // It's not a CSS feature, see http://ajaxmin.codeplex.com/discussions/275960
-    );
-
-    foreach ($files as $file) {
-        if ($expected = get_expected(str_replace('/Input/', '/Expected/', $file))) {
-            test($file, $expected, $skip);
-        }
-    }
-}
-
 
 
 require_once 'finediff.php';
