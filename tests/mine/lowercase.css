@@ -1,3 +1,6 @@
+@SUPPORTS only screen {
+	@KEYFRAMES test{ color:blue }
+}
 a{
 	HEIGHT : 100px;
 	WIDTH: 200px;

@@ -225,6 +225,10 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v2.4.8-p8 27 Mar 2017
+
+* Fixed issue [#18](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/pull/18)
+
 ### v2.4.8-p7 26 Mar 2017
 
 * Fixed many issues [#20](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/20), [#22](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/22), [#24](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/24), [#25](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/25), [#26](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/26) reported by contributors and others that I'm sure haven't been reported, at least yet. Sorry for the long delay guys.

@@ -319,7 +319,7 @@ class CSSmin
         $css = preg_replace('/\*\/ /', '*/', $css);
 
         // lowercase some popular @directives
-        $css = preg_replace_callback('/@(font-face|import|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframe|media|page|namespace)/i', array($this, 'lowercase_directives'), $css);
+        $css = preg_replace_callback('/@(document|font-face|import|keyframes|media|namespace|page|supports|viewport)/i', array($this, 'lowercase_directives'), $css);
 
         // lowercase some more common pseudo-elements
         $css = preg_replace_callback('/:(active|after|before|checked|disabled|empty|enabled|first-(?:child|of-type)|focus|hover|last-(?:child|of-type)|link|only-(?:child|of-type)|root|:selection|target|visited)/i', array($this, 'lowercase_pseudo_elements'), $css);
@@ -333,7 +333,7 @@ class CSSmin
 
         // Put the space back in some cases, to support stuff like
         // @media screen and (-webkit-min-device-pixel-ratio:0){
-        $css = preg_replace('/\band\(/i', 'and (', $css);
+        $css = preg_replace_callback('/(\s|\)\s)(and|not|or)\(/i', array($this, 'lowercase_at_rules_operators'), $css);
 
         // Remove the spaces after the things that should not have spaces after them.
         $css = preg_replace('/([\!\{\}\:;\>\+\(\[\~\=,])\s+/S', '$1', $css);
@@ -644,6 +644,11 @@ class CSSmin
         }
 
         return $this->rgb_to_hex(array('', $r.','.$g.','.$b, $matches[2]));
+    }
+
+    private function lowercase_at_rules_operators($matches)
+    {
+        return $matches[1] . strtolower($matches[2]) . ' (';
     }
 
     private function lowercase_pseudo_first($matches)

@@ -1,0 +1,1 @@
+@media(min-width:700px) and (orientation:landscape){a{color:red}}@supports not ((text-align-last:justify) or (-moz-text-align-last:justify)){p{text-align:justify}}
