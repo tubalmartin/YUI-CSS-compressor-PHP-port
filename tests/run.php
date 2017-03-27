@@ -1,5 +1,7 @@
 <?php
 
+require '../vendor/autoload.php';
+
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors', 1);
 
@@ -73,7 +75,7 @@ function get_expected($file)
  */
 function test($file, $minExpected, $skip = array())
 {
-    global $cssmin;
+    global $cssmin, $fineDiff;
 
     if (! empty($skip) && in_array(basename($file), $skip)) {
         p("INFO: CSSmin: skipping " . basename($file), 'info');
@@ -86,8 +88,7 @@ function test($file, $minExpected, $skip = array())
     $passed = assertTrue((strcmp($minOutput, $minExpected) === 0), 'CSSmin: ' . basename(dirname($file)) . '/' . basename($file));
     if (! $passed) {
         p("---Output: " .countBytes($minOutput). " bytes", '');
-        $opcodes = FineDiff::getDiffOpcodes($minExpected, $minOutput);
-        code(FineDiff::renderDiffToHTMLFromOpcodes($minExpected, $opcodes));
+        code($fineDiff->render($minExpected, $minOutput));
         p("---Expected: " .countBytes($minExpected). " bytes", '');
         code($minExpected);
         p("---Source: " .countBytes($src). " bytes", '');
@@ -175,10 +176,9 @@ function run_test_suite()
 }
 
 
-require_once 'finediff.php';
-require_once '../cssmin.php';
-
 $cssmin = new CSSmin();
+$fineDiff = new cogpowered\FineDiff\Diff;
+
 $cssmin->set_max_execution_time(180);
 
 run_tests();

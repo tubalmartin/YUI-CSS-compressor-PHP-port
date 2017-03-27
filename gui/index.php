@@ -1,5 +1,7 @@
 <?php
 
+require '../vendor/autoload.php';
+
 mb_internal_encoding('UTF-8');
 
 /**
@@ -40,17 +42,19 @@ if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
 
 if (!empty($_POST)):
 
-    // Require the compressor
-    include '../cssmin.php';
-
     // Form options
     parse_str($_POST['options']);
 
-    $linebreak_pos = trim($linebreak_pos) != '' ? $linebreak_pos : FALSE;
+    $linebreak_pos = trim($linebreak_pos) !== '' ? $linebreak_pos : FALSE;
+    $chunk_length = trim($chunk_length) !== '' ? $chunk_length : FALSE;
     $raise_php = isset($raise_php) ? TRUE : FALSE;
 
     // Create a new CSSmin object and try to raise PHP settings
     $compressor = new CSSmin($raise_php);
+
+    if ($chunk_length !== FALSE) {
+        $compressor->set_chunk_length($chunk_length);
+    }
 
     if ($raise_php) {
         $compressor->set_memory_limit($memory_limit);
@@ -87,7 +91,7 @@ else:
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container-fluid">
-            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor - PHP <span class="version">v2.4.8-4</span></a>
+            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor PHP port</a>
         </div>
       </div>
     </div>
@@ -117,7 +121,7 @@ else:
                         <legend>LESS</legend>
                         <p class="control-group">
                             <label class="checkbox">
-                                <input type="checkbox" id="enable-less" value="1"> Enable compiler <span class="version">v1.7.0</span>
+                                <input type="checkbox" id="enable-less" value="1"> Enable compiler <span class="version">v1.7.5</span>
                             </label>
                         </p>
                     </fieldset>
@@ -126,6 +130,10 @@ else:
                         <div class="control-group">
                             <label>Linebreak after <i>n</i> columns</label>
                             <input type="text" name="linebreak_pos" class="span1">
+                        </div>
+                        <div class="control-group">
+                            <label>Chunk length</label>
+                            <input type="text" name="chunk_length" class="span1">
                         </div>
                     </fieldset>
                     <fieldset>
@@ -176,8 +184,8 @@ else:
             env: 'development'
         };
     </script>
-    <script type="text/javascript" src="third-party/less-1.7.0.min.js"></script>
-    <script type="text/javascript" src="third-party/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="third-party/less-1.7.5.min.js"></script>
+    <script type="text/javascript" src="third-party/jquery-1.12.4.min.js"></script>
     <script type="text/javascript" src="third-party/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="scripts.js"></script>
 </body>

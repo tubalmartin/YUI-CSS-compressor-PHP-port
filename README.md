@@ -6,42 +6,43 @@ This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https
 
 **Table of Contents**
 
-1.  [How to use](#howtouse)
+1.  [Installation & usage](#installuse)
 2.  [YUI compressor fixed bugs](#bugsfixed)
 3.  [Unit Tests](#unittests)
 4.  [API Reference](#api)
 5.  [Who uses this?](#whousesit)
 6.  [Changelog](#changelog)
 
-<a name="howtouse"></a>
+<a name="installuse"></a>
 
-## 1. How to use
+## 1. Installation & usage
 
-**Need a GUI?**
+### Installation
 
-We've made an awesome web based GUI to use the compressor, it's in the `gui` folder.
-We built the GUI because many times we need to compress some CSS code quick and easily.
+Use [Composer](http://getcomposer.org/) to include the library into your project:
 
-GUI features:
+    $ composer.phar require tubalmartin/cssmin
 
-* Optional on-the-fly LESS compilation before compression with error reporting included. We use LESS to write CSS so we spent some time to add LESS compilation before compression.
-* Absolute control of the library.
-
-How to use the GUI:
-
-* You need a server with PHP 5.0.0+ installed.
-* Download the repository and upload it to your server.
-* Open your favourite browser and enter the URL to the `/gui` folder.
-
-**I don't need a GUI**
-
-OK, here's an example that covers a tipical use scenario:
+Require Composer's autoloader file:
 
 ```php
 <?php
 
-// Require the compressor
-require 'cssmin.php';
+require './vendor/autoload.php';
+
+// Use Cssmin
+$compressor = new CSSmin();
+```
+
+### Usage
+
+Here's an example that covers all minifier options:
+
+```php
+<?php
+
+// Autoload libraries
+require './vendor/autoload.php';
 
 // Extract the CSS code you want to compress from your CSS files
 $input_css1 = file_get_contents('test1.css');
@@ -52,6 +53,11 @@ $input_css2 = file_get_contents('test2.css');
 // If you don't want CSSmin to raise the PHP settings pass FALSE to
 // the constructor i.e. $compressor = new CSSmin(false);
 $compressor = new CSSmin();
+
+// Override chunk length
+// Default is 5000 chars. Lower it if you are having issues with PCRE.
+// Minimum length is 100 chars.
+$compressor->set_chunk_length(1000);
 
 // Override any PHP configuration options before calling run() (optional)
 $compressor->set_memory_limit('256M');
@@ -73,15 +79,21 @@ $output_css2 = $compressor->run($input_css2, 2000);
 echo $output_css1 . $output_css2;
 ```
 
-You can also use [Composer](http://getcomposer.org/) to install and autoload the compressor library:
+**Need a GUI?**
 
-    $ composer.phar require tubalmartin/cssmin
+We've made a simple web based GUI to use the compressor, it's in the `gui` folder.
 
-After which the library would be loaded with all the other Composer packages when you include Composer's autoloader file:
+GUI features:
 
-```php
-require './vendor/autoload.php';
-```
+* Optional on-the-fly LESS compilation before compression with error reporting included.
+* Absolute control of the library.
+
+How to use the GUI:
+
+* You need a server with PHP 5.0.0+ installed.
+* Download the repository and upload it to a folder in your server.
+* Run `php composer.phar install` in project's root to install dependencies.
+* Open your favourite browser and enter the URL to the `/gui` folder.
 
 <a name="bugsfixed"></a>
 
@@ -105,14 +117,13 @@ require './vendor/autoload.php';
 
 ## 3. Unit Tests
 
-Unit tests from YUI are not modified to fit this port so that you if a YUI test fails you can see the improvements/fixes this port provides over the original.
-
-**60+** unit tests written!!
+Unit tests from YUI have been modified to fit this port.
 
 How to run the test suite:
 
 * You need a server with PHP 5.0.0+ installed.
 * Download the repository and upload it to a folder in your server.
+* Run `php composer.phar install` in project's root to install dependencies.
 * Open your favourite browser and enter the URL to the file `tests/run.php`.
 
 <a name="api"></a>
@@ -246,6 +257,9 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 * Fixed issue [#18](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/pull/18)
 * Added `set_chunk_length` method.
 * `bold` & `normal` values get compressed to `700` & `400` respectively for `font-weight` property.
+* GUI updated.
+* FineDiff library loaded through Composer.
+* README updated.
 
 ### v2.4.8-p7 26 Mar 2017
 
