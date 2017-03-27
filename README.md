@@ -1,5 +1,7 @@
 # A PHP port of the YUI CSS compressor
 
+[![Latest Stable Version](https://poser.pugx.org/tubalmartin/cssmin/v/stable)](https://packagist.org/packages/tubalmartin/cssmin) [![Total Downloads](https://poser.pugx.org/tubalmartin/cssmin/downloads)](https://packagist.org/packages/tubalmartin/cssmin) [![Daily Downloads](https://poser.pugx.org/tubalmartin/cssmin/d/daily)](https://packagist.org/packages/tubalmartin/cssmin) [![License](https://poser.pugx.org/tubalmartin/cssmin/license)](https://packagist.org/packages/tubalmartin/cssmin)
+
 This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https://github.com/yui/yuicompressor).
 
 **Table of Contents**
