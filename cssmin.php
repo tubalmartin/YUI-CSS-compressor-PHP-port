@@ -30,10 +30,12 @@ class CSSmin
 
     private $comments;
     private $preserved_tokens;
-    private $memory_limit;
-    private $max_execution_time;
-    private $pcre_backtrack_limit;
-    private $pcre_recursion_limit;
+    private $chunk_length = 5000;
+    private $min_chunk_length = 100;
+    private $memory_limit = 128 * 1048576; // 128MB in bytes
+    private $max_execution_time = 60; // 1 min
+    private $pcre_backtrack_limit = 1000 * 1000;
+    private $pcre_recursion_limit = 500 * 1000;
     private $raise_php_limits;
 
     /**
@@ -42,12 +44,6 @@ class CSSmin
      */
     public function __construct($raise_php_limits = TRUE)
     {
-        // Set suggested PHP limits
-        $this->memory_limit = 128 * 1048576; // 128MB in bytes
-        $this->max_execution_time = 60; // 1 min
-        $this->pcre_backtrack_limit = 1000 * 1000;
-        $this->pcre_recursion_limit =  500 * 1000;
-
         $this->raise_php_limits = (bool) $raise_php_limits;
     }
 
@@ -101,24 +97,24 @@ class CSSmin
         $charset = '';
         $charset_regexp = '/(@charset)( [^;]+;)/i';
         $css_chunks = array();
-        $css_chunk_length = 5000; // aprox size, not exact
+        $increment = $this->chunk_length / 100;
         $start_index = 0;
-        $i = $css_chunk_length; // save initial iterations
+        $i = $this->chunk_length; // save initial iterations
         $l = strlen($css);
 
 
         // if the number of characters is 5000 or less, do not chunk
-        if ($l <= $css_chunk_length) {
+        if ($l <= $this->chunk_length) {
             $css_chunks[] = $css;
         } else {
             // chunk css code securely
             while ($i < $l) {
-                $i += 50; // save iterations
-                if ($l - $start_index <= $css_chunk_length || $i >= $l) {
+                $i += $increment; // save iterations
+                if ($l - $start_index <= $this->chunk_length || $i >= $l) {
                     $css_chunks[] = $this->str_slice($css, $start_index);
                     break;
                 }
-                if ($css[$i - 1] === '}' && $i - $start_index > $css_chunk_length) {
+                if ($css[$i - 1] === '}' && $i - $start_index > $this->chunk_length) {
                     // If there are two ending curly braces }} separated or not by spaces,
                     // join them in the same chunk (i.e. @media blocks)
                     $next_chunk = substr($css, $i);
@@ -147,6 +143,16 @@ class CSSmin
         $css_chunks[0] = $charset . $css_chunks[0];
 
         return implode('', $css_chunks);
+    }
+
+    /**
+     * Sets the approximate number of characters to use when splitting a string in chunks.
+     * @param int $length
+     */
+    public function set_chunk_length($length)
+    {
+        $length = (int) $length;
+        $this->chunk_length = $length < $this->min_chunk_length ? $this->min_chunk_length : $length;
     }
 
     /**
@@ -351,6 +357,10 @@ class CSSmin
 
         // Replace 0 0 0 0; with 0 0 for safe properties only.
         $css = preg_replace('/(background\-position)\:0%?(?: 0%?){1,3}(;|\}| \!)/i', '$1:0 0$2', $css);
+
+        // Shorten font-weight values
+        $css = preg_replace('/(font\-weight\:)bold(;|\}| \!)/i', '${1}700$2', $css);
+        $css = preg_replace('/(font\-weight\:)normal(;|\}| \!)/i', '${1}400$2', $css);
 
         // Shorten colors from rgb(51,102,153) to #336699, rgb(100%,0%,0%) to #ff0000 (sRGB color space)
         // Shorten colors from hsl(0, 100%, 50%) to #ff0000 (sRGB color space)

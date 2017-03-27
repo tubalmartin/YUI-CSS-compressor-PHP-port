@@ -155,6 +155,20 @@ Defaults to FALSE (1 long line).
 
 A string of compressed CSS code or an empty string if no string is passed.
 
+### set_chunk_length(int *$length*)
+
+**Description**
+
+Sets the the approximate number of characters to use when splitting a string in chunks.
+
+CSSmin default value: `5000`
+
+**Parameters**
+
+*length*
+
+Values & notes: Minimum value supported: `100`
+
 ### set_memory_limit(mixed *$limit*)
 
 **Description**
@@ -228,6 +242,8 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 ### v2.4.8-p8 27 Mar 2017
 
 * Fixed issue [#18](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/pull/18)
+* Added `set_chunk_length` method.
+* `bold` & `normal` values get compressed to `700` & `400` respectively for `font-weight` property.
 
 ### v2.4.8-p7 26 Mar 2017
 

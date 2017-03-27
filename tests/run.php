@@ -179,5 +179,6 @@ require_once 'finediff.php';
 require_once '../cssmin.php';
 
 $cssmin = new CSSmin();
+$cssmin->set_max_execution_time(180);
 
 run_tests();
