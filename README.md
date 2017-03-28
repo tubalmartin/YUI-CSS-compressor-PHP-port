@@ -252,6 +252,10 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v2.4.8-p9 28 Mar 2017
+
+* Rolling back property declaration with scalar expressions (>= PHP 5.6) introduced in v2.4.8-p8 to support PHP 5.0. No change in compressor behavior.
+
 ### v2.4.8-p8 27 Mar 2017
 
 * Fixed issue [#18](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/pull/18)

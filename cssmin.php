@@ -32,10 +32,10 @@ class CSSmin
     private $preserved_tokens;
     private $chunk_length = 5000;
     private $min_chunk_length = 100;
-    private $memory_limit = 128 * 1048576; // 128MB in bytes
+    private $memory_limit;
     private $max_execution_time = 60; // 1 min
-    private $pcre_backtrack_limit = 1000 * 1000;
-    private $pcre_recursion_limit = 500 * 1000;
+    private $pcre_backtrack_limit;
+    private $pcre_recursion_limit;
     private $raise_php_limits;
 
     /**
@@ -44,6 +44,10 @@ class CSSmin
      */
     public function __construct($raise_php_limits = TRUE)
     {
+        $this->memory_limit = 128 * 1048576; // 128MB in bytes
+        $this->pcre_backtrack_limit = 1000 * 1000;
+        $this->pcre_recursion_limit = 500 * 1000;
+
         $this->raise_php_limits = (bool) $raise_php_limits;
     }
 
