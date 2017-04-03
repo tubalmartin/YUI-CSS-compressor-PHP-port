@@ -345,6 +345,10 @@ class CSSmin
         // @media screen and (-webkit-min-device-pixel-ratio:0){
         $css = preg_replace_callback('/(\s|\)\s)(and|not|or)\(/i', array($this, 'lowercase_at_rules_operators'), $css);
 
+        // Put the space back in for @support tag
++       // @supports (display: flex) and  @supports not (display: flex)
++       $css = preg_replace('/\b(supports|not)\(/i', '$1 (', $css);    
+
         // Remove the spaces after the things that should not have spaces after them.
         $css = preg_replace('/([\!\{\}\:;\>\+\(\[\~\=,])\s+/S', '$1', $css);
 
