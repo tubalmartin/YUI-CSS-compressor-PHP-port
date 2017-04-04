@@ -2,6 +2,8 @@
 
 require '../vendor/autoload.php';
 
+use cogpowered\FineDiff\Diff as FineDiff;
+
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors', 1);
 
@@ -10,21 +12,24 @@ header('Content-Type: text/html;charset=utf-8');
 /**
  * Prints a HTML heading
  */
-function h($content, $size = 2) {
+function h($content, $size = 2)
+{
     printf('<h%d>'.htmlspecialchars($content).'</h%d>'."\n", $size, $size);
 }
 
 /**
  * Prints a HTML paragraph
  */
-function p($content, $class) {
+function p($content, $class)
+{
     printf('<p class="%s">'.htmlspecialchars($content).'</p>'."\n", $class);
 }
 
 /**
  * Prints a HTML code section
  */
-function code($code) {
+function code($code)
+{
     printf('<pre><code>%s</code></pre>'."\n", $code);
 }
 
@@ -37,12 +42,23 @@ function code($code) {
 function assertTrue($test, $message)
 {
     static $count;
-    if (!isset($count)) $count = array('pass'=>0, 'fail'=>0, 'total'=>0);
+    if (!isset($count)) {
+        $count = array('pass'=>0, 'fail'=>0, 'total'=>0);
+    }
 
     $mode = $test ? 'pass' : 'fail';
     $outMode = $test ? 'PASS' : '!FAIL';
-    p(sprintf("%s: %s (%d of %d tests run so far have %sed)\n",
-        $outMode, $message, ++$count[$mode], ++$count['total'], $mode), $mode);
+    p(
+        sprintf(
+            "%s: %s (%d of %d tests run so far have %sed)\n",
+            $outMode,
+            $message,
+            ++$count[$mode],
+            ++$count['total'],
+            $mode
+        ),
+        $mode
+    );
 
     return (bool)$test;
 }
@@ -67,7 +83,7 @@ function countBytes($str)
  */
 function get_expected($file)
 {
-    return file_exists($file) ? trim(file_get_contents($file)) : FALSE;
+    return file_exists($file) ? trim(file_get_contents($file)) : false;
 }
 
 /**
@@ -85,10 +101,16 @@ function test($file, $minExpected, $skip = array())
     $src = file_get_contents($file);
     $minOutput = $cssmin->run($src);
 
-    $passed = assertTrue((strcmp($minOutput, $minExpected) === 0), 'CSSmin: ' . basename(dirname($file)) . '/' . basename($file));
+    $passed = assertTrue(
+        strcmp($minOutput, $minExpected) === 0,
+        'CSSmin: ' . basename(dirname($file)) . '/' . basename($file)
+    );
+
     if (! $passed) {
-        p("---Output: " .countBytes($minOutput). " bytes", '');
+        p("---Diff:", '');
         code($fineDiff->render($minExpected, $minOutput));
+        p("---Output: " .countBytes($minOutput). " bytes", '');
+        code($minOutput);
         p("---Expected: " .countBytes($minExpected). " bytes", '');
         code($minExpected);
         p("---Source: " .countBytes($src). " bytes", '');
@@ -127,13 +149,15 @@ function run_tests()
     <body>
     <h1>YUI CSS compressor PHP - Test suite</h1>
 <?php
-    $test_name = isset($_GET['test']) ? trim($_GET['test']) : null;
 
-    if (empty($test_name)) {
-        run_test_suite();
-    } else {
-        run_test($test_name);
-    }
+$test_name = isset($_GET['test']) ? trim($_GET['test']) : null;
+
+if (empty($test_name)) {
+    run_test_suite();
+} else {
+    run_test($test_name);
+}
+
 ?>
     </body>
     </html>
@@ -176,8 +200,8 @@ function run_test_suite()
 }
 
 
-$cssmin = new CSSmin();
-$fineDiff = new cogpowered\FineDiff\Diff;
+$cssmin = new CSSmin;
+$fineDiff = new FineDiff;
 
 $cssmin->set_max_execution_time(180);
 

@@ -130,7 +130,7 @@ How to run the test suite:
 
 ## 4. API Reference
 
-### __construct([ bool *$raise_php_limits* ])
+### __construct([ bool *$raisePhpLimits* ])
 
 **Description**
 
@@ -138,13 +138,13 @@ Class constructor, creates a new CSSmin object.
 
 **Parameters**
 
-*raise_php_limits*
+*raisePhpLimits*
 
 If TRUE, CSSmin will try to raise the values of some php configuration options.
 Set to FALSE to keep the values of your php configuration options.
 Defaults to TRUE.
 
-### run(string *$css* [, int *$linebreak_pos* ])
+### run(string *$css* [, int *$linebreakPos* ])
 
 **Description**
 
@@ -158,7 +158,7 @@ Minifies a string of uncompressed CSS code.
 A string of uncompressed CSS code.
 Defaults to an empty string `''`.
 
-*linebreak_pos*
+*linebreakPos*
 
 Some source control tools don't like it when files containing lines longer than, say 8000 characters, are checked in.
 The linebreak option is used in that case to split long lines after a specific column.
@@ -251,6 +251,12 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### v2.4.8-p10 4 Apr 2017
+
+* This is the last v2 release. v3 onwards will only support PHP 5.3+.
+* This patch has all improvements and fixes v3.0.0 has. See v3.0.0 notes for further info.
+* Updating to this patch is strongly recommended.
 
 ### v2.4.8-p9 28 Mar 2017
 

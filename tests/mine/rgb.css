@@ -4,7 +4,7 @@ a{
   background-image: linear-gradient(to bottom, rgb(255,0,0)10%, rgb(255,0,0)90%);
   background-image: linear-gradient(to bottom, rgb(255, 0,  0) 10%, rgb(255  ,0,0) 90%);
   background: linear-gradient(to bottom, rgb(100%, 0%,  0%), rgb(100%  ,0%,0%));
-  color: rgb(90%, 80.1%, 76%);
+  color: rgb(90%, 80.1%, 76.4%);
   color: rgb(256,-1,0);
   color: rgb(101%,-1%,0%)
 }
