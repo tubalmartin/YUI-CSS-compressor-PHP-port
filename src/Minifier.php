@@ -511,7 +511,7 @@ class Minifier
         $css = preg_replace('/[^{};\/]+\{\}/S', '', $css);
 
         // Restore new lines for /*! important comments
-        $css = preg_replace('/'. self::NL .'}/', "\n", $css);
+        $css = preg_replace('/'. self::NL .'\}/', "\n", $css);
 
         // Add "/" back to fix Opera -o-device-pixel-ratio query
         $css = preg_replace('/'. self::QUERY_FRACTION .'/', '/', $css);
