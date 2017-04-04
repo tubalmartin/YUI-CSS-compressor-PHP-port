@@ -1,12 +1,21 @@
 a{
-	padding: +0000% 0.0% 0in 00.000;
+	margin: +2.4px 0px;
+	padding: -0.4px 0px;
+    margin: 1px 0.0em 0rem 0%;
+	padding: 4px 0px;
+    padding: +0000% 0.0% 0in 00.000;
 	margin:-.0em .000pc +0px -00.0000%;
     transition-duration: 0s;
     left: -20.0px;
     padding: 0 0 0 0;
+    margin: 0 0pc 0 0;
+    padding: 10px 0px 20px 0px;
     margin: 0 0 0;
+    line-height: 0px;
+    width: 0px;
+    max-width: 0%;
 }
-b{
+\;b\:0px{
 	leading: 0050% -0010.5% 001.004in -0.45vw;
 	trailing: 5000% .500px 1.200100em 0.40500;
     transition-duration: 0ms;
@@ -15,6 +24,15 @@ b{
     pitch:
         0hz; /* intentionally on next line */
     padding: 0 0;
+    top: 0rem;
+    bottom: 0vh;
+    left:      0rem;
+    border-top: 0em solid blue;
+    border-width:  0px;
+    column-gap: 0%;
+    outline-width: 0px;
+    border-radius: 0px;
+    border-top-right-radius: 0em;
 }
 body
 {

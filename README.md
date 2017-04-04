@@ -6,7 +6,7 @@ This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https
 
 **Table of Contents**
 
-1.  [Installation & usage](#installuse)
+1.  [Installation, requirements & usage](#installuse)
 2.  [YUI compressor fixed bugs](#bugsfixed)
 3.  [Unit Tests](#unittests)
 4.  [API Reference](#api)
@@ -15,7 +15,7 @@ This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https
 
 <a name="installuse"></a>
 
-## 1. Installation & usage
+## 1. Installation, requirements & usage
 
 ### Installation
 
@@ -30,9 +30,15 @@ Require Composer's autoloader file:
 
 require './vendor/autoload.php';
 
-// Use Cssmin
+use tubalmartin\CssMin\Minifier as CSSmin;
+
+// Use it!
 $compressor = new CSSmin();
 ```
+
+### Requirements
+
+* PHP 5.3.2 or newer with PCRE extension.
 
 ### Usage
 
@@ -43,6 +49,8 @@ Here's an example that covers all minifier options:
 
 // Autoload libraries
 require './vendor/autoload.php';
+
+use tubalmartin\CssMin\Minifier as CSSmin;
 
 // Extract the CSS code you want to compress from your CSS files
 $input_css1 = file_get_contents('test1.css');
@@ -57,19 +65,19 @@ $compressor = new CSSmin();
 // Override chunk length
 // Default is 5000 chars. Lower it if you are having issues with PCRE.
 // Minimum length is 100 chars.
-$compressor->set_chunk_length(1000);
+$compressor->setChunkLength(1000);
 
 // Override any PHP configuration options before calling run() (optional)
-$compressor->set_memory_limit('256M');
-$compressor->set_max_execution_time(120);
+$compressor->setMemoryLimit('256M');
+$compressor->setMaxExecutionTime(120);
 
 // Compress the CSS code in 1 long line and store the result in a variable
 $output_css1 = $compressor->run($input_css1);
 
 // You can change any PHP configuration option between run() calls
 // and those will be applied for that run
-$compressor->set_pcre_backtrack_limit(3000000);
-$compressor->set_pcre_recursion_limit(150000);
+$compressor->setPcreBacktrackLimit(3000000);
+$compressor->setPcreRecursionLimit(150000);
 
 // Compress the CSS code splitting lines after a specific column (2000) and
 // store the result in a variable
@@ -90,7 +98,7 @@ GUI features:
 
 How to use the GUI:
 
-* You need a server with PHP 5.0.0+ installed.
+* You need a server with PHP 5.3.0+ installed.
 * Download the repository and upload it to a folder in your server.
 * Run `php composer.phar install` in project's root to install dependencies.
 * Open your favourite browser and enter the URL to the `/gui` folder.
@@ -130,7 +138,7 @@ How to run the test suite:
 
 ## 4. API Reference
 
-### __construct([ bool *$raise_php_limits* ])
+### __construct([ bool *$raisePhpLimits* ])
 
 **Description**
 
@@ -138,13 +146,13 @@ Class constructor, creates a new CSSmin object.
 
 **Parameters**
 
-*raise_php_limits*
+*raisePhpLimits*
 
 If TRUE, CSSmin will try to raise the values of some php configuration options.
 Set to FALSE to keep the values of your php configuration options.
 Defaults to TRUE.
 
-### run(string *$css* [, int *$linebreak_pos* ])
+### run(string *$css* [, int *$linebreakPos* ])
 
 **Description**
 
@@ -158,7 +166,7 @@ Minifies a string of uncompressed CSS code.
 A string of uncompressed CSS code.
 Defaults to an empty string `''`.
 
-*linebreak_pos*
+*linebreakPos*
 
 Some source control tools don't like it when files containing lines longer than, say 8000 characters, are checked in.
 The linebreak option is used in that case to split long lines after a specific column.
@@ -168,7 +176,7 @@ Defaults to FALSE (1 long line).
 
 A string of compressed CSS code or an empty string if no string is passed.
 
-### set_chunk_length(int *$length*)
+### setChunkLength(int *$length*)
 
 **Description**
 
@@ -182,7 +190,7 @@ CSSmin default value: `5000`
 
 Values & notes: Minimum value supported: `100`
 
-### set_memory_limit(mixed *$limit*)
+### setMemoryLimit(mixed *$limit*)
 
 **Description**
 
@@ -196,7 +204,7 @@ CSSmin default value: `128M`
 
 Values & notes: [memory_limit documentation](http://php.net/manual/en/ini.core.php#ini.memory-limit)
 
-### set_max_execution_time(int *$seconds*)
+### setMaxExecutionTime(int *$seconds*)
 
 **Description**
 
@@ -210,7 +218,7 @@ CSSmin default value: `60`
 
 Values & notes: [max_execution_time documentation](http://php.net/manual/en/info.configuration.php#ini.max-execution-time)
 
-### set_pcre_backtrack_limit(int *$limit*)
+### setPcreBacktrackLimit(int *$limit*)
 
 **Description**
 
@@ -224,7 +232,7 @@ CSSmin default value: `1000000`
 
 Values & notes: [pcre.backtrack_limit documentation](http://php.net/manual/en/pcre.configuration.php#ini.pcre.backtrack-limit)
 
-### set_pcre_recursion_limit(int *$limit*)
+### setPcreRecursionLimit(int *$limit*)
 
 **Description**
 
@@ -251,6 +259,27 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### v3.0.0 4 Apr 2017
+
+* New API compliant with PSR-1, PSR-2 & PSR-4. PHP 5.3.2+ required. I think it was time!
+* Code completely reviewed & refactored. More performant and reliable. This is the most stable and tested release to date.
+* Many tests added, strengthened and fixed. Big, real life, stylesheets included such as Bootstrap or Foundation.
+* Fixed some critical and minor issues, such as:
+   * Chunking system breaking some stylesheets (broken at rules block) or leaving some bits off.
+   * Backreferences in replacement strings breaking stylesheets.
+   * [#23](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/23)
+   * Others...
+* Color compression improved. Now all named colors are supported i.e. from `white` to `#fff`.
+* Shortening zero values is back but in a safe manner, shortening values assigned to "safe" properties only i.e. from `margin: 1px 0.0em 0rem 0%` to `margin:1px 0 0`. Check the code to see the list of "safe" properties.
+* `padding` and `margin` properties are shortened to the bare minimum i.e. from `margin: 3px 2.1em 3px 2.1em` => `margin:3px 2.1em`
+* Upgrading to v3 is strongly recommended for users enjoying PHP 5.3.2+. 
+
+### v2.4.8-p10 4 Apr 2017
+
+* This is the last v2 release. v3 onwards will only support PHP 5.3.2+.
+* This patch has all improvements and fixes v3.0.0 has. See v3.0.0 notes for further info (no API change in this version of course).
+* Updating to this patch is strongly recommended for users stuck with PHP versions lower than PHP 5.3.
 
 ### v2.4.8-p9 28 Mar 2017
 

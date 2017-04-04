@@ -2,6 +2,8 @@
 
 require '../vendor/autoload.php';
 
+use tubalmartin\CssMin\Minifier as CSSmin;
+
 mb_internal_encoding('UTF-8');
 
 /**
@@ -13,13 +15,14 @@ mb_internal_encoding('UTF-8');
  * @param array|string $value The array or string to be stripped.
  * @return array|string Stripped array (or string in the callback).
  */
-function stripslashes_deep($value) {
-    if ( is_array($value) ) {
+function stripslashes_deep($value)
+{
+    if (is_array($value)) {
         $value = array_map('stripslashes_deep', $value);
-    } elseif ( is_object($value) ) {
-        $vars = get_object_vars( $value );
-        foreach ($vars as $key=>$data) {
-            $value->{$key} = stripslashes_deep( $data );
+    } elseif (is_object($value)) {
+        $vars = get_object_vars($value);
+        foreach ($vars as $key => $data) {
+            $value->{$key} = stripslashes_deep($data);
         }
     } else {
         $value = stripslashes($value);
@@ -40,27 +43,26 @@ if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
 }
 
 
-if (!empty($_POST)):
-
+if (!empty($_POST)) :
     // Form options
     parse_str($_POST['options']);
 
-    $linebreak_pos = trim($linebreak_pos) !== '' ? $linebreak_pos : FALSE;
-    $chunk_length = trim($chunk_length) !== '' ? $chunk_length : FALSE;
-    $raise_php = isset($raise_php) ? TRUE : FALSE;
+    $linebreak_pos = trim($linebreak_pos) !== '' ? $linebreak_pos : false;
+    $chunk_length = trim($chunk_length) !== '' ? $chunk_length : false;
+    $raise_php = isset($raise_php) ? true : false;
 
     // Create a new CSSmin object and try to raise PHP settings
     $compressor = new CSSmin($raise_php);
 
-    if ($chunk_length !== FALSE) {
-        $compressor->set_chunk_length($chunk_length);
+    if ($chunk_length !== false) {
+        $compressor->setChunkLength($chunk_length);
     }
 
     if ($raise_php) {
-        $compressor->set_memory_limit($memory_limit);
-        $compressor->set_max_execution_time($max_execution_time);
-        $compressor->set_pcre_backtrack_limit(1000 * $pcre_backtrack_limit);
-        $compressor->set_pcre_recursion_limit(1000 * $pcre_recursion_limit);
+        $compressor->setMemoryLimit($memory_limit);
+        $compressor->setMaxExecutionTime($max_execution_time);
+        $compressor->setPcreBacktrackLimit(1000 * $pcre_backtrack_limit);
+        $compressor->setPcreRecursionLimit(1000 * $pcre_recursion_limit);
     }
 
     // Compress the CSS code and store data
@@ -69,13 +71,12 @@ if (!empty($_POST)):
     $output['originalSize'] = mb_strlen($_POST['css'], '8bit');
     $output['compressedSize'] = mb_strlen($output['css'], '8bit');
     $output['bytesSaved'] = $output['originalSize'] - $output['compressedSize'];
-    $output['compressionRatio'] = round(($output['bytesSaved'] * 100) / ($output['originalSize'] === 0 ? 1 : $output['originalSize']), 2);
+    $output['compressionRatio'] = round(($output['bytesSaved'] * 100) /
+        ($output['originalSize'] === 0 ? 1 : $output['originalSize']), 2);
 
     // Output data
     echo json_encode($output);
-
-else:
-
+else :
 ?>
 <!DOCTYPE HTML>
 <html lang="en-US">
@@ -91,7 +92,7 @@ else:
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container-fluid">
-            <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor PHP port</a>
+          <a class="brand" href="https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port">YUI CSS compressor PHP port</a>
         </div>
       </div>
     </div>
@@ -191,7 +192,5 @@ else:
 </body>
 </html>
 <?php
-
 endif;
-
 ?>

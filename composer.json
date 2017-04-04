@@ -15,10 +15,12 @@
         "source": "https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port"
     },
     "autoload": {
-        "classmap": ["cssmin.php"]
+        "psr-4": {
+            "tubalmartin\\CssMin\\": "src"
+        }
     },
     "require": {
-        "php": ">=5.0.0"
+        "php": ">=5.3.2"
     },
     "require-dev": {
         "cogpowered/finediff": "0.3.*"

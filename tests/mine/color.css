@@ -1,0 +1,22 @@
+#\:white a[black=":white;"] {
+    color: white;
+    color: whitesmoke;
+    background: white;
+    background: border-box fuchsia;
+    background: linear-gradient( to left top, black, #ffc0cb 60%, blueviolet);
+    background-color: black;
+    text-shadow: 1px 1px 2px black;
+    text-shadow: white 2px 5px;
+    box-shadow: 3px 3px yellow, -1em 0 0.4em fuchsia;
+    outline: 1px solid white;
+    outline-color: yellow;
+    box: black white, yellow;
+    utline-color: black white, yellow;
+    border: 1px dotted rebeccapurple; /* Big hug to Eric Meyer */
+    border-color: yellowgreen;
+    border-bottom: 3px solid lightyellow;
+    border-right-color: ghostwhite;
+}
+b {
+    color: #fffff0;
+}
