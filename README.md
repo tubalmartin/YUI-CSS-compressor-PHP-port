@@ -98,7 +98,7 @@ GUI features:
 
 How to use the GUI:
 
-* You need a server with PHP 5.3.0+ installed.
+* You need a server with PHP 5.3.2+ installed.
 * Download the repository and upload it to a folder in your server.
 * Run `php composer.phar install` in project's root to install dependencies.
 * Open your favourite browser and enter the URL to the `/gui` folder.
@@ -129,7 +129,7 @@ Unit tests from YUI have been modified to fit this port.
 
 How to run the test suite:
 
-* You need a server with PHP 5.3.0+ installed.
+* You need a server with PHP 5.3.2+ installed.
 * Download the repository and upload it to a folder in your server.
 * Run `php composer.phar install` in project's root to install dependencies.
 * Open your favourite browser and enter the URL to the file `tests/run.php`.
