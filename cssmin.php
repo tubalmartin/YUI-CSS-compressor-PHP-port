@@ -199,8 +199,8 @@ class CSSmin
     private function doRaisePhpLimits()
     {
         $phpLimits = array(
-            'memoryLimit' => $this->memoryLimit,
-            'maxExecutionTime' => $this->maxExecutionTime,
+            'memory_limit' => $this->memoryLimit,
+            'max_execution_time' => $this->maxExecutionTime,
             'pcre.backtrack_limit' => $this->pcreBacktrackLimit,
             'pcre.recursion_limit' =>  $this->pcreRecursionLimit
         );
@@ -214,12 +214,12 @@ class CSSmin
             }
 
             // memoryLimit exception: allow -1 for "no memory limit".
-            if ($name === "memoryLimit" && $current === -1) {
+            if ($name === 'memory_limit' && $current === -1) {
                 continue;
             }
 
             // maxExecutionTime exception: allow 0 for "no memory limit".
-            if ($name === "maxExecutionTime" && $current === 0) {
+            if ($name === 'max_execution_time' && $current === 0) {
                 continue;
             }
 

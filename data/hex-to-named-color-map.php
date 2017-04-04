@@ -33,5 +33,5 @@ return array(
     '#008080' => 'teal',
     '#ff6347' => 'tomato',
     '#ee82ee' => 'violet',
-    'wheat' => '#f5deb3'
+    '#f5deb3' => 'wheat'
 );
