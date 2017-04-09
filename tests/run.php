@@ -100,7 +100,10 @@ function test($file, $minExpected, $skip = array())
     }
 
     $src = file_get_contents($file);
+
+    $startTime = round(microtime(true) * 1000);
     $minOutput = $cssmin->run($src);
+    $ms = round(microtime(true) * 1000) - $startTime;
 
     $passed = assertTrue(
         strcmp($minOutput, $minExpected) === 0,
@@ -117,6 +120,8 @@ function test($file, $minExpected, $skip = array())
         p("---Source: " .countBytes($src). " bytes", '');
         code($src);
     }
+
+    return $ms;
 }
 
 /**
@@ -179,7 +184,11 @@ function run_test($test_name)
     }
 
     if ($expected = get_expected($file . '.min')) {
-        test($file, $expected);
+        $ms = test($file, $expected);
+    }
+
+    if (isset($ms)) {
+        p('Time spent minifying CSS: '. $ms .'ms', '');
     }
 }
 
@@ -192,18 +201,19 @@ function run_test_suite()
     $files = glob(dirname(__FILE__) . '/mine/*.css');
     $files = array_merge($files, glob(dirname(__FILE__) . '/yui/*.css'));
     $skip = array();
+    $ms = 0;
 
     foreach ($files as $file) {
         if ($expected = get_expected($file . '.min')) {
-            test($file, $expected, $skip);
+            $ms += test($file, $expected, $skip);
         }
     }
+
+    p('Time spent minifying CSS: '. $ms .'ms', '');
 }
 
 
 $cssmin = new CssMin;
 $fineDiff = new FineDiff;
-
-$cssmin->setMaxExecutionTime(180);
 
 run_tests();

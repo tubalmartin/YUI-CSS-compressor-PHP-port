@@ -3,6 +3,6 @@ a{a:1}
 /*!"preserve" me*/
 b{content: "/**/"}
 /* quite " quote ' \' \" */
-/* ie mac \*/
+/* ie mac comment hack will not be preserved \*/
 c {c : 3}
 /* end hiding */

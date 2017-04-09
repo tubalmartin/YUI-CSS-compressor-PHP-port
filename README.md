@@ -260,10 +260,34 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v3.1.0 9 Apr 2017
+
+* Code deeply analyzed. Some areas rewritten from the ground up with maximum performance in mind. No change in compressor behavior.
+* Fixed some hidden bugs discovered along the way that affected performance negatively.
+* IE5/Mac comment hack removed from minifier logic. Those comments will no longer be preserved.
+* The table below displays the performance optimization done in this version in comparison with the previous one running the whole test suite:
+
+PHP version used: 5.3.29
+
+| chunkLength | v3.0.0 | v3.1.0 |
+| --- | --- | --- |
+| 100 | 38s | 6.9s |
+| 1000 | 8.5s | 5.4s |
+| 2000 | 7.3s | 5.3s |
+| 5000 | 5.8s | 5.2s |
+
+PHP version used: 7.0.8
+
+| chunkLength | v3.0.0 | v3.1.0 |
+| --- | --- | --- |
+| 100 | 22.8s | 2.1s |
+| 1000 | 2.9s | 1.1s |
+| 2000 | 2s | 0.9s |
+| 5000 | 1.3s | 0.8s |
+
 ### v3.0.0 4 Apr 2017
 
 * New API compliant with PSR-1, PSR-2 & PSR-4. PHP 5.3.2+ required. I think it was time!
-* Code completely reviewed & refactored. More performant and reliable. This is the most stable and tested release to date.
 * Many tests added, strengthened and fixed. Big, real life, stylesheets included such as Bootstrap or Foundation.
 * Fixed some critical and minor issues, such as:
    * Chunking system breaking some stylesheets (broken at rules block) or leaving some bits off.
