@@ -1,4 +1,10 @@
-p :link { 
+ ::before,  p ::after {
+   margin: 0px;
+ }
+p :link {
   ba:zinga;;;
   foo: bar;;;
+}
+.foo  :after {
+  color: red;
 }

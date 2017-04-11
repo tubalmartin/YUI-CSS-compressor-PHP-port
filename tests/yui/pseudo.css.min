@@ -1,1 +1,1 @@
-p :link{ba:zinga;foo:bar}
+::before,p ::after{margin:0}p :link{ba:zinga;foo:bar}.foo :after{color:red}

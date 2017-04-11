@@ -1,0 +1,16 @@
+/*! dont delete me */
+.foo{  /* ha */}
+.test{color:red}
+@media (-o-device-pixel-ratio:  1/10) {
+
+
+    }
+a[href$="/test/"] span.test{}
+#foo{ }
+:after{  }
+@media print {
+    /* empty */
+    body{
+
+    }
+}

@@ -94,8 +94,16 @@ class Minifier
 
         // IE7: Process Microsoft matrix filters (whitespaces between Matrix parameters). Can contain strings inside.
         $css = preg_replace_callback(
-            '/\s*filter:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^)]+)\)/Ss',
+            '/filter:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^)]+)\)/Ss',
             array($this, 'processOldIeSpecificMatrixDefinitionCallback'),
+            $css
+        );
+
+        // Process quoted unquotable attribute selectors to unquote them. Covers most common cases.
+        // Likelyhood of a quoted attribute selector being a substring in a string: Very very low.
+        $css = preg_replace(
+            '/\[\s*([a-z][a-z-]+)\s*([\*\|\^\$~]?=)\s*[\'"](-?[a-z_][a-z0-9-_]+)[\'"]\s*\]/Ssi',
+            '[$1$2$3]',
             $css
         );
 
@@ -111,7 +119,7 @@ class Minifier
 
         // Safe chunking: process at-rule blocks so after chunking nothing gets stripped out
         $css = preg_replace_callback(
-            '/@(?:document|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|supports).+?\}\s*\}/si',
+            '/@(?:document|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|supports).+?\}\s*\}/Ssi',
             array($this, 'processAtRuleBlocksCallback'),
             $css
         );
@@ -123,7 +131,7 @@ class Minifier
         // the backtrack limit number (i.e. /(.*)/s) PCRE functions may fail silently
         // returning NULL and $css would be empty.
         $charset = '';
-        $charsetRegexp = '/(@charset)( [^;]+;)/i';
+        $charsetRegexp = '/(@charset)( [^;]+;)/Si';
         $cssChunks = array();
         $l = strlen($css);
 
@@ -135,7 +143,7 @@ class Minifier
             $offset = $this->chunkLength;
 
             // Chunk css code in a safe way
-            while (preg_match('/(?<!\\\\)\}/', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+            while (preg_match('/(?<!\\\\)\}/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
                 $matchIndex = $matches[0][1];
                 $nextStartIndex = $matchIndex + 1;
                 $cssChunks[] = substr($css, $startIndex, $nextStartIndex - $startIndex);
@@ -178,7 +186,7 @@ class Minifier
         // that case to split long lines after a specific column.
         if ($linebreakPos > 0) {
             $offset = $linebreakPos;
-            while (preg_match('/(?<!\\\\)\}(?!\n)/', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+            while (preg_match('/(?<!\\\\)\}(?!\n)/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
                 $matchIndex = $matches[0][1];
                 $css = substr_replace($css, "\n", $matchIndex + 1, 0);
                 $offset = $matchIndex + 2 + $linebreakPos;
@@ -336,10 +344,10 @@ class Minifier
         $css = preg_replace('/\s+/', ' ', $css);
 
         // Remove spaces before & after newlines
-        $css = preg_replace('/\s*'. self::NL .'\s*/', self::NL, $css);
+        $css = preg_replace('/\s?'. self::NL .'\s?/S', self::NL, $css);
 
         // Shorten & preserve calculations calc(...) since spaces are important
-        $css = preg_replace_callback('/calc(\(((?:[^()]+|(?1))*)\))/i', array($this, 'processCalcCallback'), $css);
+        $css = preg_replace_callback('/calc(\(((?:[^()]+|(?1))*)\))/Si', array($this, 'processCalcCallback'), $css);
 
         // Replace positive sign from numbers preceded by : or a white-space before the leading space is removed
         // +1.2em to 1.2em, +.8px to .8px, +2% to 2%
@@ -359,22 +367,22 @@ class Minifier
         // Replace 0 length numbers with 0
         $css = preg_replace('/((?<!\\\\):|\s)-?\.?0+([^\d])/S', '${1}0$2', $css);
 
-        // Remove the spaces before the things that should not have spaces before them.
-        // But, be careful not to turn "p :link {...}" into "p:link{...}"
-        // Swap out any pseudo-class colons with the token, and then swap back.
-        $css = preg_replace_callback('/(?:^|\})[^{]*\s+:/', array($this, 'processColonCallback'), $css);
+        // Preserve pseudo-class colons in selectors before removing spaces before
+        // the things that should not have spaces before them.
+        // We must avoid turning "p :link {...}" into "p:link{...}".
+        $css = preg_replace('/((?:^|\})[^{]*\s):/S', '$1'.self::CLASSCOLON, $css);
 
         // Remove spaces before the things that should not have spaces before them.
-        $css = preg_replace('/\s+([!{};:>+()\]~=,])/', '$1', $css);
+        $css = preg_replace('/\s([!{};:>+()\]~=,])/S', '$1', $css);
+
+        // Bring the pseudo-class colon back
+        $css = preg_replace('/'. self::CLASSCOLON .'/', ':', $css);
 
         // Restore spaces for !important
         $css = preg_replace('/!important/i', ' !important', $css);
 
-        // bring back the colon
-        $css = preg_replace('/'. self::CLASSCOLON .'/', ':', $css);
-
         // retain space for special IE6 cases
-        $css = preg_replace_callback('/:first-(line|letter)(\{|,)/i', function ($matches) {
+        $css = preg_replace_callback('/:first-(line|letter)(\{|,)/Si', function ($matches) {
             return ':first-'. strtolower($matches[1]) .' '. $matches[2];
         }, $css);
 
@@ -384,7 +392,7 @@ class Minifier
         // lowercase some popular @directives
         $css = preg_replace_callback(
             '/@(document|font-face|import|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|namespace|page|' .
-            'supports|viewport)/i',
+            'supports|viewport)/Si',
             function ($matches) {
                 return '@'. strtolower($matches[1]);
             },
@@ -394,7 +402,7 @@ class Minifier
         // lowercase some more common pseudo-elements
         $css = preg_replace_callback(
             '/:(active|after|before|checked|disabled|empty|enabled|first-(?:child|of-type)|focus|hover|' .
-            'last-(?:child|of-type)|link|only-(?:child|of-type)|root|:selection|target|visited)/i',
+            'last-(?:child|of-type)|link|only-(?:child|of-type)|root|:selection|target|visited)/Si',
             function ($matches) {
                 return ':'. strtolower($matches[1]);
             },
@@ -403,7 +411,7 @@ class Minifier
 
         // lowercase some more common functions
         $css = preg_replace_callback(
-            '/:(lang|not|nth-child|nth-last-child|nth-last-of-type|nth-of-type|(?:-(?:moz|webkit)-)?any)\(/i',
+            '/:(lang|not|nth-child|nth-last-child|nth-last-of-type|nth-of-type|(?:-(?:moz|webkit)-)?any)\(/Si',
             function ($matches) {
                 return ':'. strtolower($matches[1]) .'(';
             },
@@ -413,8 +421,8 @@ class Minifier
         // lower case some common function that can be values
         // NOTE: rgb() isn't useful as we replace with #hex later, as well as and() is already done for us
         $css = preg_replace_callback(
-            '/([:,( ]\s*)(attr|color-stop|from|rgba|to|url|-webkit-gradient|' .
-            '(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?(?:calc|max|min|(?:repeating-)?(?:linear|radial)-gradient))/iS',
+            '/([:,( ]\s?)(attr|color-stop|from|rgba|to|url|-webkit-gradient|' .
+            '(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?(?:calc|max|min|(?:repeating-)?(?:linear|radial)-gradient))/Si',
             function ($matches) {
                 return $matches[1] . strtolower($matches[2]);
             },
@@ -423,36 +431,36 @@ class Minifier
 
         // Put the space back in some cases, to support stuff like
         // @media screen and (-webkit-min-device-pixel-ratio:0){
-        $css = preg_replace_callback('/(\s|\)\s)(and|not|or)\(/i', function ($matches) {
+        $css = preg_replace_callback('/(\s|\)\s)(and|not|or)\(/Si', function ($matches) {
             return $matches[1] . strtolower($matches[2]) .' (';
         }, $css);
 
         // Remove the spaces after the things that should not have spaces after them.
-        $css = preg_replace('/([!{}:;>+(\[~=,])\s+/S', '$1', $css);
+        $css = preg_replace('/([!{}:;>+(\[~=,])\s/S', '$1', $css);
 
         // remove unnecessary semicolons
-        $css = preg_replace('/;+\}/', '}', $css);
+        $css = preg_replace('/;+\}/S', '}', $css);
 
         // Fix for issue: #2528146
         // Restore semicolon if the last property is prefixed with a `*` (lte IE7 hack)
         // to avoid issues on Symbian S60 3.x browsers.
-        $css = preg_replace('/(\*[a-z0-9\-]+\s*:[^;}]+)(\})/', '$1;$2', $css);
+        $css = preg_replace('/(\*[a-z0-9\-]+\s?:[^;}]+)(\})/S', '$1;$2', $css);
 
         // Shorten zero values for safe properties only
         $css = $this->shortenZeroValues($css);
 
         // Shorten font-weight values
-        $css = preg_replace('/(font-weight:)bold\b/i', '${1}700', $css);
-        $css = preg_replace('/(font-weight:)normal\b/i', '${1}400', $css);
+        $css = preg_replace('/(font-weight:)bold\b/Si', '${1}700', $css);
+        $css = preg_replace('/(font-weight:)normal\b/Si', '${1}400', $css);
 
         // Shorten suitable shorthand properties with repeated non-zero values
         $css = preg_replace(
-            '/(margin|padding):('.$this->numRegex.') ('.$this->numRegex.') (?:\2) (?:\3)(;|\}| !)/i',
+            '/(margin|padding):('.$this->numRegex.') ('.$this->numRegex.') (?:\2) (?:\3)(;|\}| !)/Si',
             '$1:$2 $3$4',
             $css
         );
         $css = preg_replace(
-            '/(margin|padding):('.$this->numRegex.') ('.$this->numRegex.') ('.$this->numRegex.') (?:\3)(;|\}| !)/i',
+            '/(margin|padding):('.$this->numRegex.') ('.$this->numRegex.') ('.$this->numRegex.') (?:\3)(;|\}| !)/Si',
             '$1:$2 $3 $4$5',
             $css
         );
@@ -461,12 +469,12 @@ class Minifier
         // Shorten colors from hsl(0, 100%, 50%) to #ff0000 (sRGB color space)
         // This makes it more likely that it'll get further compressed in the next step.
         $css = preg_replace_callback(
-            '/rgb\s*\(\s*([0-9,\s\-.%]+)\s*\)(.{1})/i',
+            '/rgb\s?\(\s?([0-9,\s\-.%]+)\s?\)(.{1})/Si',
             array($this, 'rgbToHexCallback'),
             $css
         );
         $css = preg_replace_callback(
-            '/hsl\s*\(\s*([0-9,\s\-.%]+)\s*\)(.{1})/i',
+            '/hsl\s?\(\s?([0-9,\s\-.%]+)\s?\)(.{1})/Si',
             array($this, 'hslToHexCallback'),
             $css
         );
@@ -474,8 +482,8 @@ class Minifier
         // Shorten colors from #AABBCC to #ABC or shorter color name.
         // Look for hex colors which don't have a =, or a " in front of them (to avoid filters)
         $css = preg_replace_callback(
-            '/(=\s*?["\']?)?#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])(;|,|\}|\)|"|\'| )/iS',
-            array($this, 'shortenHexColors'),
+            '/(=\s?["\']?)?#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])(;|,|\}|\)|"|\'| )/Si',
+            array($this, 'shortenHexColorsCallback'),
             $css
         );
 
@@ -483,16 +491,19 @@ class Minifier
         $css = $this->shortenNamedColors($css);
 
         // shorter opacity IE filter
-        $css = preg_replace('/progid:DXImageTransform\.Microsoft\.Alpha\(Opacity=/i', 'alpha(opacity=', $css);
+        $css = preg_replace('/progid:DXImageTransform\.Microsoft\.Alpha\(Opacity=/Si', 'alpha(opacity=', $css);
 
         // Find a fraction that is used for Opera's -o-device-pixel-ratio query
-        // Add token to add the "\" back in later
-        $css = preg_replace('/\(([a-z\-]+):([0-9]+)\/([0-9]+)\)/i', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
+        // Add token to add the "/" back in later
+        $css = preg_replace('/\(([a-z\-]+):([0-9]+)\/([0-9]+)\)/Si', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
 
         // Patch new lines to avoid being removed when followed by empty rules cases
         $css = preg_replace('/'. self::NL .'/', self::NL .'}', $css);
 
-        // Remove empty rules.
+        // Remove empty rules: First pass.
+        $css = preg_replace('/[^{};\/]+\{\}/S', '', $css);
+
+        // Remove empty rules: Second pass to remove blocks whose only content is an empty rule removed in first pass.
         $css = preg_replace('/[^{};\/]+\{\}/S', '', $css);
 
         // Restore new lines for /*! important comments
@@ -503,10 +514,10 @@ class Minifier
 
         // Replace multiple semi-colons in a row by a single one
         // See SF bug #1980989
-        $css = preg_replace('/;;+/', ';', $css);
+        $css = preg_replace('/;;+/S', ';', $css);
 
         // Lowercase all uppercase properties
-        $css = preg_replace_callback('/(\{|;)([A-Z\-]+)(:)/', function ($matches) {
+        $css = preg_replace_callback('/(\{|;)([A-Z\-]+)(:)/S', function ($matches) {
             return $matches[1] . strtolower($matches[2]) . $matches[3];
         }, $css);
 
@@ -667,20 +678,10 @@ class Minifier
             preg_replace(
                 '/([+\-]{1})\(/',
                 '$1 (',
-                trim(preg_replace('/\s*([*\/(),])\s*/', '$1', $matches[2]))
+                trim(preg_replace('/\s?([*\/(),])\s?/S', '$1', $matches[2]))
             )
         );
         return 'calc('. $this->registerPreservedToken($token) .')';
-    }
-
-    /**
-     * Preserves colons in selectors before optimizing spaces
-     * @param $matches
-     * @return string
-     */
-    private function processColonCallback($matches)
-    {
-        return preg_replace('/\:/', self::CLASSCOLON, $matches[0]);
     }
 
     /**
@@ -716,7 +717,7 @@ class Minifier
         );
 
         $regStart = '/(;|\{)';
-        $regEnd = '/i';
+        $regEnd = '/Si';
 
         // First zero regex start
         $oneZeroRegStart = $regStart .'('. implode('|', $oneZeroSafeProperties) .'):';
@@ -802,7 +803,7 @@ class Minifier
      * @param $matches
      * @return string
      */
-    private function shortenHexColors($matches)
+    private function shortenHexColorsCallback($matches)
     {
         $isFilter = $matches[1] !== null && $matches[1] !== '';
 
@@ -810,7 +811,7 @@ class Minifier
             // Restore, maintain case, otherwise filter will break
             $color = '#'. $matches[2] . $matches[3] . $matches[4] . $matches[5] . $matches[6] . $matches[7];
         } else {
-            if (preg_match('/#([0-9a-f])(?:\1)([0-9a-f])(?:\2)([0-9a-f])(?:\3)/i', $matches[0])) {
+            if (preg_match('/#([0-9a-f])(?:\1)([0-9a-f])(?:\2)([0-9a-f])(?:\3)/Si', $matches[0])) {
                 // Compress.
                 $hex = $matches[3] . $matches[5] . $matches[7];
             } else {
@@ -847,7 +848,7 @@ class Minifier
         );
 
         $regStart = '/(;|\{)('. implode('|', $propertiesWithColors) .'):([^;}]*)\b';
-        $regEnd = '\b/iS';
+        $regEnd = '\b/Si';
 
         foreach ($this->namedToHexColorsMap as $colorName => $colorCode) {
             $patterns[] = $regStart . $colorName . $regEnd;

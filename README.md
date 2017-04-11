@@ -260,6 +260,13 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v3.1.1 11 Apr 2017
+
+* Regexes improved.
+* Small performance improvements.
+* Blocks such as `@media` blocks with empty rules are removed too.
+* Quoted unquotable attribute selectors get unquoted now i.e. from `col[class*="col-"]` to `col[class*=col-]`. Covers most common cases. Safe approach.
+
 ### v3.1.0 9 Apr 2017
 
 * Code deeply analyzed. Some areas rewritten from the ground up with maximum performance in mind. No change in compressor behavior.
