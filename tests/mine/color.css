@@ -1,5 +1,6 @@
 #\:white a[black=":white;"] {
     color: white;
+    white-space: normal;
     color: whitesmoke;
     background: white;
     background: border-box fuchsia;

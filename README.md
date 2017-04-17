@@ -260,6 +260,30 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v3.1.2 17 Apr 2017
+
+* Improved compression of long named colors: now all long named colors get compressed to their shorter HEX counterpart.
+* Huge performance improvement after code profiling. See table below for results when running the whole test suite:
+
+PHP version used: 5.3.29
+
+| chunkLength | v3.1.1 | v3.1.2 |
+| --- | --- | --- |
+| 100 | 6.8s | 2.6s |
+| 1000 | 5.3s | 2s |
+| 2000 | 5.2s | 1.95s |
+| 5000 | 5.1s | 1.9s |
+
+PHP version used: 7.0.8
+
+| chunkLength | v3.1.1 | v3.1.2 |
+| --- | --- | --- |
+| 100 | 2s | 0.72s |
+| 1000 | 1s | 0.37s |
+| 2000 | 0.8s | 0.33s |
+| 5000 | 0.7s | 0.3s |
+
+
 ### v3.1.1 11 Apr 2017
 
 * Regexes improved.
