@@ -263,6 +263,7 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 ### v3.1.2 17 Apr 2017
 
 * Improved compression of long named colors: now all long named colors get compressed to their shorter HEX counterpart.
+* Fixes cases such as [#39](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/39)
 * Huge performance improvement after code profiling. See table below for results when running the whole test suite:
 
 PHP version used: 5.3.29

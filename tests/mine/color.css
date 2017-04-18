@@ -1,4 +1,5 @@
 #\:white a[black=":white;"] {
+    background-image: url(assets/images/white.png);
     color: white;
     white-space: normal;
     color: whitesmoke;
