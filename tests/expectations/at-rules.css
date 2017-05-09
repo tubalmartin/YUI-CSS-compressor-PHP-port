@@ -1,0 +1,1 @@
+@charset "utf-8";@media all{body{background-color:gold}}#foo{border-width:1px}@import "another.css";#bar{border-width:10px}@font-face{font-family:'gzipper';src:url(yanone.eot);src:local('gzipper'),url(yanone.ttf) format('truetype')}

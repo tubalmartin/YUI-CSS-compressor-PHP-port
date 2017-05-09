@@ -1,0 +1,30 @@
+/* re: 2495387 */
+@CHARSET "utf-8";
+@media all {
+    body {
+        background-color: gold;
+    }
+}
+/* This is invalid CSS, but frequently happens as a result of concatenation. */
+@charset 'utf-8';
+#foo {
+    border-width:1px;
+}
+@import "another.css";
+/*
+Note that this is erroneous!
+The actual CSS file can only have a single charset.
+However, this is the job of the author/application.
+The compressor should not get involved.
+*/
+@charset "another one";
+#bar {
+    border-width:10px;
+}
+@font-face {
+    font-family: 'gzipper';
+    src: url(yanone.eot);
+    src: local('gzipper'),
+    url(yanone.ttf) format('truetype');
+}
+

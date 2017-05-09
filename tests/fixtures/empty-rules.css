@@ -1,0 +1,25 @@
+/*! dont delete me */
+.foo{  /* ha */}
+@import "another.css";
+/* I'm empty - delete me */
+empty { ;}
+.test{color:red}
+@media (-o-device-pixel-ratio:  1/10) {
+
+
+    }
+a[href$="/test/"] span.test{}
+#foo{ }
+:after{  ;}
+@media print {
+    /* empty */
+    body{
+
+    }
+}
+
+@media screen {
+    /* this rule should be removed, not simply minified.*/
+    .breakme {}
+    .printonly { display: none; }
+}

@@ -1,3 +1,0 @@
-a{color:red}
-/*! imp */
-html>/**/body p{color:blue;*width:auto;height:2%}/* unclosed comment at EOF issue

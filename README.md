@@ -2,20 +2,21 @@
 
 [![Latest Stable Version](https://poser.pugx.org/tubalmartin/cssmin/v/stable)](https://packagist.org/packages/tubalmartin/cssmin) [![Total Downloads](https://poser.pugx.org/tubalmartin/cssmin/downloads)](https://packagist.org/packages/tubalmartin/cssmin) [![Daily Downloads](https://poser.pugx.org/tubalmartin/cssmin/d/daily)](https://packagist.org/packages/tubalmartin/cssmin) [![License](https://poser.pugx.org/tubalmartin/cssmin/license)](https://packagist.org/packages/tubalmartin/cssmin)
 
-This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https://github.com/yui/yuicompressor).
+This port is based on version 2.4.8 (Jun 12, 2013) of the [YUI compressor](https://github.com/yui/yuicompressor).   
+This port contains fixes & features not present in the original YUI compressor.
 
 **Table of Contents**
 
-1.  [Installation, requirements & usage](#installuse)
-2.  [YUI compressor fixed bugs](#bugsfixed)
-3.  [Unit Tests](#unittests)
+1.  [Installation & requirements](#install)
+2.  [How to use](#howtouse)
+3.  [Tests](#tests)
 4.  [API Reference](#api)
 5.  [Who uses this?](#whousesit)
 6.  [Changelog](#changelog)
 
-<a name="installuse"></a>
+<a name="install"></a>
 
-## 1. Installation, requirements & usage
+## 1. Installation & requirements
 
 ### Installation
 
@@ -33,16 +34,26 @@ require './vendor/autoload.php';
 use tubalmartin\CssMin\Minifier as CSSmin;
 
 // Use it!
-$compressor = new CSSmin();
+$compressor = new CSSmin;
 ```
 
 ### Requirements
 
 * PHP 5.3.2 or newer with PCRE extension.
 
-### Usage
+<a name="howtouse"></a>
 
-Here's an example that covers all minifier options:
+## 2. How to use
+
+There are three ways you can use this library:
+
+1. [PHP](#php)
+2. [CLI](#cli)
+3. [GUI](#gui)
+
+<a name="php"></a>
+
+### PHP
 
 ```php
 <?php
@@ -53,14 +64,22 @@ require './vendor/autoload.php';
 use tubalmartin\CssMin\Minifier as CSSmin;
 
 // Extract the CSS code you want to compress from your CSS files
-$input_css1 = file_get_contents('test1.css');
-$input_css2 = file_get_contents('test2.css');
+$input_css = file_get_contents('test.css');
 
 // Create a new CSSmin object.
 // By default CSSmin will try to raise PHP settings.
 // If you don't want CSSmin to raise the PHP settings pass FALSE to
 // the constructor i.e. $compressor = new CSSmin(false);
-$compressor = new CSSmin();
+$compressor = new CSSmin;
+
+// Set the compressor up before compressing (global setup):
+
+// Keep sourcemap comment in the output.
+// Default behavior removes it.
+$compressor->keepSourceMap();
+
+// Split long lines in the output approximately every 1000 chars.
+$compressor->setLineBreakPosition(1000);
 
 // Override chunk length
 // Default is 5000 chars. Lower it if you are having issues with PCRE.
@@ -70,24 +89,53 @@ $compressor->setChunkLength(1000);
 // Override any PHP configuration options before calling run() (optional)
 $compressor->setMemoryLimit('256M');
 $compressor->setMaxExecutionTime(120);
-
-// Compress the CSS code in 1 long line and store the result in a variable
-$output_css1 = $compressor->run($input_css1);
-
-// You can change any PHP configuration option between run() calls
-// and those will be applied for that run
 $compressor->setPcreBacktrackLimit(3000000);
 $compressor->setPcreRecursionLimit(150000);
 
-// Compress the CSS code splitting lines after a specific column (2000) and
-// store the result in a variable
-$output_css2 = $compressor->run($input_css2, 2000);
+// Compress the CSS code!
+$output_css = $compressor->run($input_css);
+
+// You can override any setup between runs without having to create another CSSmin object.
+// Let's say you want to remove the sourcemap comment from the output and
+// disable splitting long lines in the output.
+// You can achieve that using the methods `keepSourceMap` and `setLineBreakPosition`:
+$compressor->keepSourceMap(false);
+$compressor->setLineBreakPosition(0);
+$output_css = $compressor->run($input_css);
+// Or you can achieve the same thing passing a second & third arguments to the `run` method:
+$output_css = $compressor->run($input_css, 0, false); 
 
 // Do whatever you need with the compressed CSS code
-echo $output_css1 . $output_css2;
+echo $output_css;
 ```
 
-**Need a GUI?**
+<a name="cli"></a>
+
+### CLI
+
+A binary file named `cssmin` will be created after installation in `./vendor/bin` folder.
+
+Output help:
+```
+./vendor/bin/cssmin -h
+```
+Output compression result to the command line:
+```
+./vendor/bin/cssmin -i ./my-css-file.css
+```
+Output compression result to another file:
+```
+./vendor/bin/cssmin -i ./my-css-file.css -o ./my-css-file.min.css
+```
+Output compression result to another file and keep sourcemap comment in the output:
+```
+./vendor/bin/cssmin -i ./my-css-file.css -o ./my-css-file.min.css --keep-sourcemap
+```
+See the binary help for all available CLI options.
+
+<a name="gui"></a>
+
+### GUI
 
 We've made a simple web based GUI to use the compressor, it's in the `gui` folder.
 
@@ -103,36 +151,29 @@ How to use the GUI:
 * Run `php composer.phar install` in project's root to install dependencies.
 * Open your favourite browser and enter the URL to the `/gui` folder.
 
-<a name="bugsfixed"></a>
+<a name="tests"></a>
 
-## 2. FIXED BUGS still present in the original YUI compressor
+## 3. Tests
 
-* Only one `@charset` at-rule per file and pushed at the beginning of the file. YUI compressor does not remove @charset at-rules if single quotes are used `@charset 'utf-8'`.
-* Safer/improved comment removal. YUI compressor would ruin part of the output if the `*` selector is used right after a comment: `a{/* comment 1 */*width:auto;}/* comment 2 */* html .b{height:100px}`. See issues [#2528130](http://yuilibrary.com/projects/yuicompressor/ticket/2528130), [#2528118](http://yuilibrary.com/projects/yuicompressor/ticket/2528118) & [this topic](http://yuilibrary.com/forum/viewtopic.php?f=94&t=9606)
-* `background: none;` is not compressed to `background:0;` anymore. See issue [#2528127](http://yuilibrary.com/projects/yuicompressor/ticket/2528127).
-* `text-shadow: 0 0 0;` is not compressed to `text-shadow:0;` anymore. See issue [#2528142](http://yuilibrary.com/projects/yuicompressor/ticket/2528142)
-* Trailing `;` is not removed anymore if the last property is prefixed with a `*` (lte IE7 hack). See issue [#2528146](http://yuilibrary.com/projects/yuicompressor/ticket/2528146)
-* Newlines before and/or after a preserved comment `/*!` are not removed (we leave just 1 newline). YUI removes all newlines making it really hard to spot an important comment.
-* Spaces surrounding the `+` operator in `calc()` calculations are not removed. YUI removes them and that is wrong.
-* Fix for issue [#2528093](http://yuilibrary.com/projects/yuicompressor/ticket/2528093).
-* Fixes for `!important` related issues.
-* Fixes @keyframes 0% step bug.
-* Some units should not be removed when the value is 0, such as `0s` or `0ms`.
-* Fixes replacing 0 length values in selectors such as `.span0px { ... }`.
-* And some more...
-
-<a name="unittests"></a>
-
-## 3. Unit Tests
-
-Unit tests from YUI have been modified to fit this port.
+Tests from YUI compressor have been modified to fit this port.
 
 How to run the test suite:
 
-* You need a server with PHP 5.3.2+ installed.
-* Download the repository and upload it to a folder in your server.
-* Run `php composer.phar install` in project's root to install dependencies.
-* Open your favourite browser and enter the URL to the file `tests/run.php`.
+* Run `php composer.phar install` in project's root to install dependencies. `phpunit` will be installed locally.
+* After that, run `phpunit` in the command line:
+
+```
+./vendor/bin/phpunit
+```
+
+PHPUnit diffing is too simple so when a test fails it's hard to see the actual diff, that's why I've created a 
+test runner that displays inline coloured diffs for a failing test. Only one test can be run at a time.
+
+Here's how to use it:
+
+```
+./tests/bin/runner -t <expectation-name> [-f <fixture-name>] [--keep-sourcemap] [--linebreak-position <pos>]
+```
 
 <a name="api"></a>
 
@@ -152,7 +193,7 @@ If TRUE, CSSmin will try to raise the values of some php configuration options.
 Set to FALSE to keep the values of your php configuration options.
 Defaults to TRUE.
 
-### run(string *$css* [, int *$linebreakPos* ])
+### run(string *$css* [, int *$linebreakPosition*, bool *$keepSourceMap* ])
 
 **Description**
 
@@ -166,15 +207,28 @@ Minifies a string of uncompressed CSS code.
 A string of uncompressed CSS code.
 Defaults to an empty string `''`.
 
-*linebreakPos*
+*linebreakPosition*
 
 Some source control tools don't like it when files containing lines longer than, say 8000 characters, are checked in.
 The linebreak option is used in that case to split long lines after a specific column.
-Defaults to FALSE (1 long line).
+Defaults to `0` (1 long line).
+
+*$keepSourceMap*
+
+Keep sourcemap comment in the output.
+Defaults to `false` (remove the source map comment from output).
 
 **Return Values**
 
 A string of compressed CSS code or an empty string if no string is passed.
+
+### keepSourceMap(bool *$keepSourceMap*)
+
+**Description**
+
+Keep sourcemap comment `/*# sourceMappingURL=<path> */`in the output.
+
+CSSmin default value: `false`
 
 ### setChunkLength(int *$length*)
 
@@ -190,19 +244,20 @@ CSSmin default value: `5000`
 
 Values & notes: Minimum value supported: `100`
 
-### setMemoryLimit(mixed *$limit*)
+### setLinebreakPosition(int *$position*)
 
 **Description**
 
-Sets the `memory_limit` configuration option for this script
+Some source control tools don't like it when files containing lines longer than, say 8000 characters, are checked in.
+The linebreak option is used in that case to split long lines after a specific column.
 
-CSSmin default value: `128M`
+CSSmin default value: `0` (1 long line).
 
 **Parameters**
 
-*limit*
+*position*
 
-Values & notes: [memory_limit documentation](http://php.net/manual/en/ini.core.php#ini.memory-limit)
+Values & notes: Minimum value supported: `1`
 
 ### setMaxExecutionTime(int *$seconds*)
 
@@ -217,6 +272,20 @@ CSSmin default value: `60`
 *seconds*
 
 Values & notes: [max_execution_time documentation](http://php.net/manual/en/info.configuration.php#ini.max-execution-time)
+
+### setMemoryLimit(mixed *$limit*)
+
+**Description**
+
+Sets the `memory_limit` configuration option for this script
+
+CSSmin default value: `128M`
+
+**Parameters**
+
+*limit*
+
+Values & notes: [memory_limit documentation](http://php.net/manual/en/ini.core.php#ini.memory-limit)
 
 ### setPcreBacktrackLimit(int *$limit*)
 
@@ -255,10 +324,32 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 * [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
 * [Autoptimize](http://wordpress.org/plugins/autoptimize/) is a Wordpress plugin. Autoptimize speeds up your website and helps you save bandwidth by aggregating and minimizing JS, CSS and HTML.
 * [IMPRESSPAGES](http://www.impresspages.org/) PHP framework with content editor.
+* Other dependent Composer packages.
 
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### v3.2.0 10 May 2017
+
+NEW:
+* PHPUnit added as test runner.
+* CLI binary provided.
+* CSS Sourcemap special comment supported.
+* `ms` unit compression: from `300ms` to `.3s`.
+* Shortable double colon (CSS3) pseudo-elements are now shortened to single colon (CSS2): from `::after` to `:after`.
+* `background: none` & `background: transparent` are shortened to `background:0 0`.
+
+IMPROVED:
+* Some regular expressions.
+* Long line splitting algorithm.
+* Lowercasing pseudo-classes, pseudo-elements and functions to cover more cases.
+* Shortening of suitable shorthand properties with repeated values. All cases are covered now.
+* Tests.
+
+FIXED:
+* When splitting long lines in the output, if a comment or string contained closing curly braces `}`, the curly brace
+  could be recognised as a selector or at-rule closing curly brace resulting in an unexpected newline being added.
 
 ### v3.1.2 17 Apr 2017
 

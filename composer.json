@@ -19,11 +19,20 @@
             "tubalmartin\\CssMin\\": "src"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "tubalmartin\\CssMin\\Tests\\": "tests"
+        }
+    },
+    "bin": [
+        "cssmin"
+    ],
     "require": {
         "php": ">=5.3.2",
         "ext-pcre": "*"
     },
     "require-dev": {
-        "cogpowered/finediff": "0.3.*"
+        "cogpowered/finediff": "0.3.*",
+        "phpunit/phpunit": "4.8.*"
     }
 }

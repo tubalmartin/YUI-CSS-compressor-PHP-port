@@ -49,6 +49,7 @@ if (!empty($_POST)) :
 
     $linebreak_pos = trim($linebreak_pos) !== '' ? $linebreak_pos : false;
     $chunk_length = trim($chunk_length) !== '' ? $chunk_length : false;
+    $keep_sourcemap = isset($keep_sourcemap) ? true : false;
     $raise_php = isset($raise_php) ? true : false;
 
     // Create a new CSSmin object and try to raise PHP settings
@@ -56,6 +57,14 @@ if (!empty($_POST)) :
 
     if ($chunk_length !== false) {
         $compressor->setChunkLength($chunk_length);
+    }
+
+    if ($linebreak_pos !== false) {
+        $compressor->setLineBreakPosition($linebreak_pos);
+    }
+
+    if ($keep_sourcemap !== false) {
+        $compressor->keepSourceMap($keep_sourcemap);
     }
 
     if ($raise_php) {
@@ -67,7 +76,7 @@ if (!empty($_POST)) :
 
     // Compress the CSS code and store data
     $output = array();
-    $output['css'] = $compressor->run($_POST['css'], $linebreak_pos);
+    $output['css'] = $compressor->run($_POST['css']);
     $output['originalSize'] = mb_strlen($_POST['css'], '8bit');
     $output['compressedSize'] = mb_strlen($output['css'], '8bit');
     $output['bytesSaved'] = $output['originalSize'] - $output['compressedSize'];
@@ -135,6 +144,11 @@ else :
                         <div class="control-group">
                             <label>Chunk length</label>
                             <input type="text" name="chunk_length" class="span1">
+                        </div>
+                        <div class="control-group">
+                            <label class="checkbox">
+                                <input type="checkbox" name="keep_sourcemap" value="1"> Keep CSS Sourcemap comment
+                            </label>
                         </div>
                     </fieldset>
                     <fieldset>
