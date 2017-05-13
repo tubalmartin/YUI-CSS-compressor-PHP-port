@@ -23,7 +23,6 @@ class Command
                 'help',
                 'input:',
                 'output:',
-                'chunk-length:',
                 'keep-sourcemap',
                 'linebreak-position:',
                 'memory-limit:',
@@ -35,7 +34,6 @@ class Command
         $help = $this->getOpt(array('h', 'help'), $opts);
         $input = $this->getOpt(array('i', 'input'), $opts);
         $output = $this->getOpt(array('o', 'output'), $opts);
-        $chunkLength = $this->getOpt('chunk-length', $opts);
         $keepSourceMap = $this->getOpt('keep-sourcemap', $opts);
         $linebreakPosition = $this->getOpt('linebreak-position', $opts);
         $memoryLimit = $this->getOpt('memory-limit', $opts);
@@ -71,10 +69,6 @@ class Command
 
         if (!is_null($keepSourceMap)) {
             $cssmin->keepSourceMap();
-        }
-
-        if (!is_null($chunkLength)) {
-            $cssmin->setChunkLength($chunkLength);
         }
 
         if (!is_null($linebreakPosition)) {
@@ -202,8 +196,6 @@ Usage: cssmin [options] -i <file> [-o <file>]
 Options:
     
   -h|--help                      Prints this usage information.
-  --chunk-length <length>        Sets the approximate number of characters to use when splitting the provided CSS string
-                                 in chunks.
   --keep-sourcemap               Keeps the sourcemap special comment in the output.
   --linebreak-position <pos>     Splits long lines after a specific column in the output.
   --memory-limit <limit>         Sets the memory limit for this script.

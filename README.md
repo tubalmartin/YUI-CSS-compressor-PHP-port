@@ -81,11 +81,6 @@ $compressor->keepSourceMap();
 // Split long lines in the output approximately every 1000 chars.
 $compressor->setLineBreakPosition(1000);
 
-// Override chunk length
-// Default is 5000 chars. Lower it if you are having issues with PCRE.
-// Minimum length is 100 chars.
-$compressor->setChunkLength(1000);
-
 // Override any PHP configuration options before calling run() (optional)
 $compressor->setMemoryLimit('256M');
 $compressor->setMaxExecutionTime(120);
@@ -230,22 +225,6 @@ Keep sourcemap comment `/*# sourceMappingURL=<path> */`in the output.
 
 CSSmin default value: `false`
 
-### setChunkLength(int *$length*)
-
-**Description**
-
-Sets the the approximate number of characters to use when splitting a string in chunks.
-
-CSSmin default value: `5000`
-
-**Parameters**
-
-*length*
-
-Values & notes:
-* Minimum value supported: `100`
-* v3.3.0: Deprecated. Setting it has no effect. Read changelog.
-
 ### setLinebreakPosition(int *$position*)
 
 **Description**
@@ -331,6 +310,11 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### v4.0.0 13 May 2017
+
+Same behavior of v3.3.0 but `setChunkLength` method and `--chunk-length` CLI argument removed from public API.
+Read v3.3.0 changelog entry for more details.
 
 ### v3.3.0 13 May 2017
 

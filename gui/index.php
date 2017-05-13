@@ -48,16 +48,11 @@ if (!empty($_POST)) :
     parse_str($_POST['options']);
 
     $linebreak_pos = trim($linebreak_pos) !== '' ? $linebreak_pos : false;
-    $chunk_length = trim($chunk_length) !== '' ? $chunk_length : false;
     $keep_sourcemap = isset($keep_sourcemap) ? true : false;
     $raise_php = isset($raise_php) ? true : false;
 
     // Create a new CSSmin object and try to raise PHP settings
     $compressor = new CSSmin($raise_php);
-
-    if ($chunk_length !== false) {
-        $compressor->setChunkLength($chunk_length);
-    }
 
     if ($linebreak_pos !== false) {
         $compressor->setLineBreakPosition($linebreak_pos);
@@ -140,10 +135,6 @@ else :
                         <div class="control-group">
                             <label>Linebreak after <i>n</i> columns</label>
                             <input type="text" name="linebreak_pos" class="span1">
-                        </div>
-                        <div class="control-group">
-                            <label>Chunk length</label>
-                            <input type="text" name="chunk_length" class="span1">
                         </div>
                         <div class="control-group">
                             <label class="checkbox">

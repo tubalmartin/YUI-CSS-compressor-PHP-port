@@ -118,15 +118,6 @@ class Minifier
     }
 
     /**
-     * Note: As of v3.3.0 this method exists only for backwards compatibility.
-     * Sets the approximate number of characters to use when splitting a string in chunks.
-     * @param int $length
-     */
-    public function setChunkLength($length)
-    {
-    }
-
-    /**
      * Sets the approximate column after which long lines will be splitted in the output
      * with a linebreak.
      * @param int $position
