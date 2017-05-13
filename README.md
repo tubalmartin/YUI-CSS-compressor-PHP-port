@@ -242,7 +242,9 @@ CSSmin default value: `5000`
 
 *length*
 
-Values & notes: Minimum value supported: `100`
+Values & notes:
+* Minimum value supported: `100`
+* v3.3.0: Deprecated. Setting it has no effect. Read changelog.
 
 ### setLinebreakPosition(int *$position*)
 
@@ -329,6 +331,20 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### v3.3.0 13 May 2017
+
+NEW:
+* CLI binary displays some useful stats after execution.
+* A concatenated file can be safely compressed now: `@charset`, `@import` & `@namespace` at-rules will be placed correctly. 
+* Conditional group rules fully and safely supported, that is, unlimited rule nesting levels. Previously only one nesting level was fully supported.
+
+NOTES:
+* Pretty big refactor done for two main reasons:
+  * Make minified output even more reliable even when a potential scenario has not been tested beforehand.
+  * Make development, testing and contribution a bit easier due to simplified logic.
+* As a consequence of this refactor, stylesheet chunking is not needed anymore. `setChunkLength` method and `--chunk-length` CLI argument
+  still exist for backwards compatibility reasons but have no effect at all.
 
 ### v3.2.0 10 May 2017
 

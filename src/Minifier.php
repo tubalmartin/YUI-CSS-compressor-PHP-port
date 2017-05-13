@@ -24,29 +24,39 @@ namespace tubalmartin\CssMin;
 
 class Minifier
 {
-    const NL = '___YUICSSMIN_NL___';
-    const CLASSCOLON = '___YUICSSMIN_PSEUDOCLASSCOLON___';
-    const QUERY_FRACTION = '___YUICSSMIN_QUERY_FRACTION___';
-    const TOKEN = '___YUICSSMIN_PRESERVED_TOKEN_';
-    const COMMENT = '___YUICSSMIN_PRESERVE_CANDIDATE_COMMENT_';
-    const AT_RULE_BLOCK = '___YUICSSMIN_PRESERVE_AT_RULE_BLOCK_';
-
-    private $comments;
-    private $atRuleBlocks;
-    private $preservedTokens;
+    const NL = '/*_CSSMIN_NL_*/';
+    const QUERY_FRACTION = '_CSSMIN_QF_';
+    const COMMENT_TOKEN = '_CSSMIN_CMT_%d_';
+    const COMMENT_TOKEN_START = '_CSSMIN_CMT_';
+    const RULE_BODY_TOKEN = '_CSSMIN_RBT_%d_';
+    const PRESERVED_TOKEN = '_CSSMIN_PTK_%d_';
+    
+    // Token lists
+    private $comments = array();
+    private $ruleBodies = array();
+    private $preservedTokens = array();
+    
+    // Output options
     private $keepSourceMap = false;
     private $linebreakPosition = 0;
-    private $chunkLength = 5000;
-    private $minChunkLength = 100;
+    
+    // PHP ini limits
+    private $raisePhpLimits;
     private $memoryLimit;
     private $maxExecutionTime = 60; // 1 min
     private $pcreBacktrackLimit;
     private $pcreRecursionLimit;
-    private $raisePhpLimits;
+    
+    // Color maps
     private $hexToNamedColorsMap;
     private $namedToHexColorsMap;
-    private $namedToHexColorsRegex;
+    
+    // Regexes
     private $numRegex;
+    private $charsetRegex = '/@charset [^;]+;/Si';
+    private $importRegex = '/@import [^;]+;/Si';
+    private $namespaceRegex = '/@namespace [^;]+;/Si';
+    private $namedToHexColorsRegex;
     private $shortenOneZeroesRegex;
     private $shortenTwoZeroesRegex;
     private $shortenThreeZeroesRegex;
@@ -65,7 +75,7 @@ class Minifier
         $this->hexToNamedColorsMap = Colors::getHexToNamedMap();
         $this->namedToHexColorsMap = Colors::getNamedToHexMap();
         $this->namedToHexColorsRegex = sprintf(
-            '/(?<!\\\\)(:|,|\(| )(%s)(;|\}|,|\)| )/Si',
+            '/([:,( ])(%s)( |,|\)|;|$)/Si',
             implode('|', array_keys($this->namedToHexColorsMap))
         );
         $this->numRegex = sprintf('-?\d*\.?\d+%s?', $this->unitsGroupRegex);
@@ -81,135 +91,20 @@ class Minifier
      */
     public function run($css = '', $linebreakPosition = null, $keepSourceMap = null)
     {
+        $linebreakPosition = is_null($linebreakPosition) ? $this->linebreakPosition : (int) $linebreakPosition;
+        $keepSourceMap = is_null($keepSourceMap) ? $this->keepSourceMap : (bool) $keepSourceMap;
+        
         if (empty($css) || !is_string($css)) {
             return '';
         }
+
+        $this->resetRunProperties();
 
         if ($this->raisePhpLimits) {
             $this->doRaisePhpLimits();
         }
 
-        $this->resetProperties();
-
-        $linebreakPosition = is_null($linebreakPosition) ? $this->linebreakPosition : (int) $linebreakPosition;
-        $keepSourceMap = is_null($keepSourceMap) ? $this->keepSourceMap : (bool) $keepSourceMap;
-
-        // Process data urls
-        $css = $this->processDataUrls($css);
-
-        // Process comments
-        $css = preg_replace_callback(
-            '/(?<!\\\\)\/\*(.*?)\*(?<!\\\\)\//Ss',
-            array($this, 'processCommentsCallback'),
-            $css
-        );
-
-        // IE7: Process Microsoft matrix filters (whitespaces between Matrix parameters). Can contain strings inside.
-        $css = preg_replace_callback(
-            '/filter:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^)]+)\)/Ss',
-            array($this, 'processOldIeSpecificMatrixDefinitionCallback'),
-            $css
-        );
-
-        // Process quoted unquotable attribute selectors to unquote them. Covers most common cases.
-        // Likelyhood of a quoted attribute selector being a substring in a string: Very very low.
-        $css = preg_replace(
-            '/\[\s*([a-z][a-z-]+)\s*([\*\|\^\$~]?=)\s*[\'"](-?[a-z_][a-z0-9-_]+)[\'"]\s*\]/Ssi',
-            '[$1$2$3]',
-            $css
-        );
-
-        // Process strings so their content doesn't get accidentally minified
-        $css = preg_replace_callback(
-            '/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S",
-            array($this, 'processStringsCallback'),
-            $css
-        );
-
-        // Strings are safe, now wrestle the comments
-        $css = $this->processComments($css, $keepSourceMap);
-
-        // Safe chunking: process at-rule blocks so after chunking nothing gets stripped out
-        $css = preg_replace_callback(
-            '/@(?:document|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|supports).+?\}\s*\}/Ssi',
-            array($this, 'processAtRuleBlocksCallback'),
-            $css
-        );
-
-        // Let's divide css code in chunks of {$this->chunkLength} chars aprox.
-        // Reason: PHP's PCRE functions like preg_replace have a "backtrack limit"
-        // of 100.000 chars by default (php < 5.3.7) so if we're dealing with really
-        // long strings and a (sub)pattern matches a number of chars greater than
-        // the backtrack limit number (i.e. /(.*)/s) PCRE functions may fail silently
-        // returning NULL and $css would be empty.
-        $charset = '';
-        $charsetRegexp = '/(@charset)( [^;]+;)/Si';
-        $cssChunks = array();
-        $l = strlen($css);
-
-        // Do not chunk when the number of characters is <= {$this->chunkLength}
-        if ($l <= $this->chunkLength) {
-            $cssChunks[] = $css;
-        } else {
-            $startIndex = 0;
-            $offset = $this->chunkLength;
-
-            // Chunk css code in a safe way
-            while (preg_match('/(?<!\\\\)\}/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
-                $matchIndex = $matches[0][1];
-                $nextStartIndex = $matchIndex + 1;
-                $cssChunks[] = substr($css, $startIndex, $nextStartIndex - $startIndex);
-                $startIndex = $nextStartIndex;
-                $offset = $matchIndex + $this->chunkLength;
-                if ($offset > $l) {
-                    break;
-                }
-            }
-
-            // Final chunk
-            $cssChunks[] = substr($css, $startIndex);
-        }
-
-        // Minify each chunk
-        foreach ($cssChunks as &$cssChunk) {
-            $cssChunk = $this->minify($cssChunk);
-
-            // Keep the first @charset at-rule found
-            if (empty($charset) && preg_match($charsetRegexp, $cssChunk, $matches)) {
-                $charset = strtolower($matches[1]) . $matches[2];
-            }
-
-            // Delete all @charset at-rules
-            $cssChunk = preg_replace($charsetRegexp, '', $cssChunk);
-        }
-
-        // Update the first chunk and push the charset to the top of the file.
-        $cssChunks[0] = $charset . $cssChunks[0];
-
-        $css = implode('', $cssChunks);
-
-        // Some source control tools don't like it when files containing lines longer
-        // than, say 8000 characters, are checked in. The linebreak option is used in
-        // that case to split long lines after a specific column.
-        if ($linebreakPosition > 0) {
-            $offset = $linebreakPosition;
-            while (preg_match('/(?<!\\\\)\}(?!\n)/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
-                $matchIndex = $matches[0][1];
-                $css = substr_replace($css, "\n", $matchIndex + 1, 0);
-                $offset = $matchIndex + 2 + $linebreakPosition;
-                $l += 1;
-                if ($offset > $l) {
-                    break;
-                }
-            }
-        }
-
-        // Restore preserved comments and strings
-        foreach ($this->preservedTokens as $tokenId => $token) {
-            $css = preg_replace('/'. $tokenId .'/', Utils::escapeReplacementString($token), $css, 1);
-        }
-
-        return trim($css);
+        return $this->minify($css, $linebreakPosition, $keepSourceMap);
     }
 
     /**
@@ -223,13 +118,12 @@ class Minifier
     }
 
     /**
+     * Note: As of v3.3.0 this method exists only for backwards compatibility.
      * Sets the approximate number of characters to use when splitting a string in chunks.
      * @param int $length
      */
     public function setChunkLength($length)
     {
-        $length = (int) $length;
-        $this->chunkLength = $length < $this->minChunkLength ? $this->minChunkLength : $length;
     }
 
     /**
@@ -279,51 +173,6 @@ class Minifier
     }
 
     /**
-     * Resets properties whose value may change between runs
-     */
-    private function resetProperties()
-    {
-        $this->comments = array();
-        $this->atRuleBlocks = array();
-        $this->preservedTokens = array();
-    }
-
-    /**
-     * Tries to configure PHP to use at least the suggested minimum settings
-     * @return void
-     */
-    private function doRaisePhpLimits()
-    {
-        $phpLimits = array(
-            'memory_limit' => $this->memoryLimit,
-            'max_execution_time' => $this->maxExecutionTime,
-            'pcre.backtrack_limit' => $this->pcreBacktrackLimit,
-            'pcre.recursion_limit' =>  $this->pcreRecursionLimit
-        );
-
-        // If current settings are higher respect them.
-        foreach ($phpLimits as $name => $suggested) {
-            $current = Utils::normalizeInt(ini_get($name));
-
-            if ($current > $suggested) {
-                continue;
-            }
-
-            // memoryLimit exception: allow -1 for "no memory limit".
-            if ($name === 'memory_limit' && $current === -1) {
-                continue;
-            }
-
-            // maxExecutionTime exception: allow 0 for "no memory limit".
-            if ($name === 'max_execution_time' && $current === 0) {
-                continue;
-            }
-
-            ini_set($name, $suggested);
-        }
-    }
-
-    /**
      * Builds regular expressions needed for shortening zero values
      */
     private function setShortenZeroValuesRegexes()
@@ -347,272 +196,182 @@ class Minifier
         );
 
         // First zero regex
-        $regex = '/(;|\{)('. implode('|', $oneZeroSafeProperties) .'):%s/Si';
+        $regex = '/(^|;)('. implode('|', $oneZeroSafeProperties) .'):%s/Si';
         $this->shortenOneZeroesRegex = sprintf($regex, $zeroRegex);
 
         // Multiple zeroes regexes
-        $regex = '/(;|\{)(margin|padding|border-(?:width|radius)|background-position):%s/Si';
+        $regex = '/(^|;)(margin|padding|border-(?:width|radius)|background-position):%s/Si';
         $this->shortenTwoZeroesRegex = sprintf($regex, $numOrPosRegex . $zeroRegex);
         $this->shortenThreeZeroesRegex = sprintf($regex, $numOrPosRegex . $numOrPosRegex . $zeroRegex);
         $this->shortenFourZeroesRegex = sprintf($regex, $numOrPosRegex . $numOrPosRegex . $numOrPosRegex . $zeroRegex);
     }
 
     /**
-     * Registers a token of a type
-     * @param $token
-     * @param $tokenType
-     * @param $tokenList
-     * @return string
+     * Resets properties whose value may change between runs
      */
-    private function registerToken($token, $tokenType, &$tokenList)
+    private function resetRunProperties()
     {
-        $tokenId = $tokenType . count($tokenList) .'___';
-        $tokenList[$tokenId] = $token;
-        return $tokenId;
+        $this->comments = array();
+        $this->ruleBodies = array();
+        $this->preservedTokens = array();
+    }
+
+    /**
+     * Tries to configure PHP to use at least the suggested minimum settings
+     * @return void
+     */
+    private function doRaisePhpLimits()
+    {
+        $phpLimits = array(
+            'memory_limit' => $this->memoryLimit,
+            'max_execution_time' => $this->maxExecutionTime,
+            'pcre.backtrack_limit' => $this->pcreBacktrackLimit,
+            'pcre.recursion_limit' =>  $this->pcreRecursionLimit
+        );
+
+        // If current settings are higher respect them.
+        foreach ($phpLimits as $name => $suggested) {
+            $current = Utils::normalizeInt(ini_get($name));
+
+            if ($current >= $suggested) {
+                continue;
+            }
+
+            // memoryLimit exception: allow -1 for "no memory limit".
+            if ($name === 'memory_limit' && $current === -1) {
+                continue;
+            }
+
+            // maxExecutionTime exception: allow 0 for "no memory limit".
+            if ($name === 'max_execution_time' && $current === 0) {
+                continue;
+            }
+
+            ini_set($name, $suggested);
+        }
     }
 
     /**
      * Registers a preserved token
-     * @param $token
+     * @param string $token
      * @return string The token ID string
      */
     private function registerPreservedToken($token)
     {
-        return $this->registerToken($token, self::TOKEN, $this->preservedTokens);
+        $tokenId = sprintf(self::PRESERVED_TOKEN, count($this->preservedTokens));
+        $this->preservedTokens[$tokenId] = $token;
+        return $tokenId;
     }
 
     /**
      * Registers a candidate comment token
-     * @param $comment
+     * @param string $comment
      * @return string The comment token ID string
      */
-    private function registerComment($comment)
+    private function registerCommentToken($comment)
     {
-        return $this->registerToken($comment, self::COMMENT, $this->comments);
+        $tokenId = sprintf(self::COMMENT_TOKEN, count($this->comments));
+        $this->comments[$tokenId] = $comment;
+        return $tokenId;
     }
 
     /**
-     * Registers an at rule block token
-     * @param $block
-     * @return string The comment token ID string
+     * Registers a rule body token
+     * @param string $body the minified rule body
+     * @return string The rule body token ID string
      */
-    private function registerAtRuleBlock($block)
+    private function registerRuleBodyToken($body)
     {
-        return $this->registerToken($block, self::AT_RULE_BLOCK, $this->atRuleBlocks);
+        if (empty($body)) {
+            return '';
+        }
+
+        $tokenId = sprintf(self::RULE_BODY_TOKEN, count($this->ruleBodies));
+        $this->ruleBodies[$tokenId] = $body;
+        return $tokenId;
     }
 
     /**
-     * Minifies the given input CSS string
+     * Parses & minifies the given input CSS string
      * @param string $css
+     * @param int $linebreakPosition
+     * @param bool $keepSourceMap
      * @return string
      */
-    private function minify($css)
+    private function minify($css, $linebreakPosition, $keepSourceMap)
     {
-        // Restore preserved at rule blocks
-        foreach ($this->atRuleBlocks as $atRuleBlockId => $atRuleBlock) {
-            $atRuleBlockIdRegex = '/'. $atRuleBlockId .'/';
-            if (preg_match($atRuleBlockIdRegex, $css)) {
-                $css = preg_replace($atRuleBlockIdRegex, Utils::escapeReplacementString($atRuleBlock), $css, 1);
-                unset($this->atRuleBlocks[$atRuleBlockId]);
+        // Process data urls
+        $css = $this->processDataUrls($css);
+
+        // Process comments
+        $css = preg_replace_callback(
+            '/(?<!\\\\)\/\*(.*?)\*(?<!\\\\)\//Ss',
+            array($this, 'processCommentsCallback'),
+            $css
+        );
+
+        // IE7: Process Microsoft matrix filters (whitespaces between Matrix parameters). Can contain strings inside.
+        $css = preg_replace_callback(
+            '/filter:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^)]+)\)/Ss',
+            array($this, 'processOldIeSpecificMatrixDefinitionCallback'),
+            $css
+        );
+
+        // Process quoted unquotable attribute selectors to unquote them. Covers most common cases.
+        // Likelyhood of a quoted attribute selector being a substring in a string: Very very low.
+        $css = preg_replace(
+            '/\[\s*([a-z][a-z-]+)\s*([\*\|\^\$~]?=)\s*[\'"](-?[a-z_][a-z0-9-_]+)[\'"]\s*\]/Ssi',
+            '[$1$2$3]',
+            $css
+        );
+
+        // Process strings so their content doesn't get accidentally minified
+        $css = preg_replace_callback(
+            '/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S",
+            array($this, 'processStringsCallback'),
+            $css
+        );
+
+        // Strings are safe, now wrestle the comments
+        $css = $this->processComments($css, $keepSourceMap);
+
+        // Normalize all whitespace strings to single spaces. Easier to work with that way.
+        $css = preg_replace('/\s+/S', ' ', $css);
+        
+        $css = $this->processRuleBodies($css);
+
+        $css = $this->processAtRulesAndSelectors($css);
+
+        // No space after the end of a preserved comment
+        $css = str_replace('*/ ', '*/', $css);
+
+        // Restore preserved rule bodies before splitting
+        $css = str_replace(array_keys($this->ruleBodies), array_values($this->ruleBodies), $css);
+
+        // Restore new lines for /*! important comments
+        $css = str_replace(self::NL, "\n", $css);
+
+        // Some source control tools don't like it when files containing lines longer
+        // than, say 8000 characters, are checked in. The linebreak option is used in
+        // that case to split long lines after a specific column.
+        if ($linebreakPosition > 0) {
+            $l = strlen($css);
+            $offset = $linebreakPosition;
+            while (preg_match('/(?<!\\\\)\}(?!\n)/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+                $matchIndex = $matches[0][1];
+                $css = substr_replace($css, "\n", $matchIndex + 1, 0);
+                $offset = $matchIndex + 2 + $linebreakPosition;
+                $l += 1;
+                if ($offset > $l) {
+                    break;
+                }
             }
         }
 
-        // Normalize all whitespace strings to single spaces. Easier to work with that way.
-        $css = preg_replace('/\s+/', ' ', $css);
+        // Restore preserved comments and strings
+        $css = str_replace(array_keys($this->preservedTokens), array_values($this->preservedTokens), $css);
 
-        // Remove spaces before & after newlines
-        $css = preg_replace('/ ?'. self::NL .' ?/S', self::NL, $css);
-
-        // Replace positive sign from numbers preceded by : or , or white-space before the leading space is removed
-        // +1.2em to 1.2em, +.8px to .8px, +2% to 2%
-        $css = preg_replace('/(?<!\\\\)( |:|,|\()\+(\.?\d+)/S', '$1$2', $css);
-
-        // shorten ms to s
-        $css = preg_replace_callback('/(?<!\\\\)( |:|,|\()(-?)(\d{3,})ms/Si', function ($matches) {
-            return $matches[1] . $matches[2] . ((int) $matches[3] / 1000) .'s';
-        }, $css);
-
-        // Remove leading zeros from integer and float numbers preceded by : or , or white-space
-        // 000.6 to .6, -0.8 to -.8, 0050 to 50, -01.05 to -1.05
-        $css = preg_replace('/(?<!\\\\)( |:|,|\()(-?)0+([1-9]?\.?\d+)/S', '$1$2$3', $css);
-
-        // Remove trailing zeros from float numbers preceded by : or , or white-space
-        // -6.0100em to -6.01em, .0100 to .01, 1.200px to 1.2px
-        $css = preg_replace('/(?<!\\\\)( |:|,|\()(-?\d?\.\d+?)0+([^\d])/S', '$1$2$3', $css);
-
-        // Remove trailing .0 -> -9.0 to -9
-        $css = preg_replace('/(?<!\\\\)( |:|,|\()(-?\d+)\.0([^\d])/S', '$1$2$3', $css);
-
-        // Replace 0 length numbers with 0
-        $css = preg_replace('/(?<!\\\\)( |:|,|\()-?\.?0+([^\d])/S', '${1}0$2', $css);
-
-        // Shorten & preserve calculations calc(...) since spaces are important
-        $css = preg_replace_callback('/calc(\(((?:[^()]+|(?1))*)\))/Si', array($this, 'processCalcCallback'), $css);
-
-        // Preserve pseudo-class colons in selectors before removing spaces before
-        // the things that should not have spaces before them.
-        // We must avoid turning "p :link {...}" into "p:link{...}".
-        $css = preg_replace('/((?:^|\}|,)[^{]*? ):/S', '$1'.self::CLASSCOLON, $css);
-
-        // Remove spaces before the things that should not have spaces before them.
-        $css = preg_replace('/ ([!{};:>+()\]~=,])/S', '$1', $css);
-
-        // Bring the pseudo-class colon back
-        $css = preg_replace('/'. self::CLASSCOLON .'/', ':', $css);
-
-        // Restore spaces for !important
-        $css = preg_replace('/!important/i', ' !important', $css);
-
-        // Shorten shortable double colon (CSS3) pseudo-elements to single colon (CSS2)
-        $css = preg_replace('/::(before|after|first-(?:line|letter))(\{|,)/Si', ':$1$2', $css);
-
-        // retain space for special IE6 cases
-        $css = preg_replace_callback('/:first-(line|letter)(\{|,)/Si', function ($matches) {
-            return ':first-'. strtolower($matches[1]) .' '. $matches[2];
-        }, $css);
-
-        // no space after the end of a preserved comment
-        $css = preg_replace('/\*\/ /', '*/', $css);
-
-        // Put the space back in some cases, to support stuff like
-        // @media screen and (-webkit-min-device-pixel-ratio:0){
-        $css = preg_replace_callback('/( |\) )(and|not|or)\(/Si', function ($matches) {
-            return $matches[1] . strtolower($matches[2]) .' (';
-        }, $css);
-
-        // Remove the spaces after the things that should not have spaces after them.
-        $css = preg_replace('/([!{}:;>+(\[~=,]) /S', '$1', $css);
-
-        // lowercase some popular @directives
-        $css = preg_replace_callback(
-            '/(?<!\\\\)@(document|font-face|import|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|' .
-            'namespace|page|supports|viewport)/Si',
-            function ($matches) {
-                return '@'. strtolower($matches[1]);
-            },
-            $css
-        );
-
-        // lowercase some more common pseudo-classes & pseudo-elements
-        $css = preg_replace_callback(
-            '/(?<!\\\\):(active|after|before|checked|default|disabled|empty|enabled|first-(?:child|of-type)|'.
-            'focus(?:-within)?|hover|indeterminate|in-range|invalid|lang\(|last-(?:child|of-type)|left|link|not\(|'.
-            'nth-(?:child|of-type)\(|nth-last-(?:child|of-type)\(|only-(?:child|of-type)|optional|out-of-range|'.
-            'read-(?:only|write)|required|right|root|:selection|target|valid|visited)/Si',
-            function ($matches) {
-                return ':'. strtolower($matches[1]);
-            },
-            $css
-        );
-
-        // lower case some common functions that can be values
-        $css = preg_replace_callback(
-            '/(attr|blur|brightness|circle|contrast|cubic-bezier|drop-shadow|ellipse|from|grayscale|'.
-            'hsla|hue-rotate|inset|invert|local|minmax|opacity|perspective|polygon|rgba|rect|repeat|saturate|sepia|'.
-            'steps|to|url|var|-webkit-gradient|'.
-            '(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?(?:calc|(?:repeating-)?(?:linear|radial)-gradient))\(/Si',
-            function ($matches) {
-                return strtolower($matches[1]) .'(';
-            },
-            $css
-        );
-
-        // Replace multiple semi-colons in a row by a single one
-        $css = preg_replace('/;;+/S', ';', $css);
-
-        // Remove semicolon before closing brace
-        $css = preg_replace('/;\}/S', '}', $css);
-
-        // Restore semicolon if the last property is prefixed with a `*` (lte IE7 hack)
-        // to avoid issues on Symbian S60 3.x browsers.
-        $css = preg_replace('/(\*[a-z0-9-]+:[^;}]+)(\})/S', '$1;$2', $css);
-
-        // Shorten zero values for safe properties only
-        $css = $this->shortenZeroValues($css);
-
-        // Shorten font-weight values
-        $css = preg_replace('/(font-weight:)bold\b/Si', '${1}700', $css);
-        $css = preg_replace('/(font-weight:)normal\b/Si', '${1}400', $css);
-
-        // Shorten background property
-        $css = preg_replace('/(background:)(?:none|transparent)(;|\}| !)/Si', '${1}0 0$2', $css);
-
-        // Shorten colors from rgb(51,102,153) to #336699, rgb(100%,0%,0%) to #ff0000 (sRGB color space)
-        // Shorten colors from hsl(0, 100%, 50%) to #ff0000 (sRGB color space)
-        // This makes it more likely that it'll get further compressed in the next step.
-        $css = preg_replace_callback('/rgb\(([0-9,.% -]+)\)(.{1})/Si', array($this, 'rgbToHexCallback'), $css);
-        $css = preg_replace_callback('/hsl\(([0-9,.% -]+)\)(.{1})/Si', array($this, 'hslToHexCallback'), $css);
-
-        // Shorten colors from #AABBCC to #ABC or shorter color name.
-        // Look for hex colors which don't have a =, or a " in front of them (to avoid filters)
-        $css = preg_replace_callback(
-            '/(= ?["\']?)?#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])(;|,|\}|\)|"|\'| )/Si',
-            array($this, 'shortenHexColorsCallback'),
-            $css
-        );
-
-        // Shorten long named colors with a shorter HEX counterpart: white -> #fff.
-        // Run at least 2 times to cover most cases
-        $css = preg_replace_callback($this->namedToHexColorsRegex, array($this, 'shortenNamedColorsCallback'), $css);
-        $css = preg_replace_callback($this->namedToHexColorsRegex, array($this, 'shortenNamedColorsCallback'), $css);
-
-        // Shorten suitable shorthand properties with repeated values
-        $css = preg_replace(
-            array(
-                '/(margin|padding|border-(?:width|radius)):('.$this->numRegex.')(?: \2)+(;|\}| !)/Si',
-                '/(border-(?:style|color)):([#a-z0-9]+)(?: \2)+(;|\}| !)/Si'
-            ),
-            '$1:$2$3',
-            $css
-        );
-        $css = preg_replace(
-            array(
-                '/(margin|padding|border-(?:width|radius)):'.
-                '('.$this->numRegex.') ('.$this->numRegex.') (?:\2) (?:\3)(;|\}| !)/Si',
-                '/(border-(?:style|color)):([#a-z0-9]+) ([#a-z0-9]+) (?:\2) (?:\3)(;|\}| !)/Si'
-            ),
-            '$1:$2 $3$4',
-            $css
-        );
-        $css = preg_replace(
-            array(
-                '/(margin|padding|border-(?:width|radius)):'.
-                '('.$this->numRegex.') ('.$this->numRegex.') ('.$this->numRegex.') (?:\3)(;|\}| !)/Si',
-                '/(border-(?:style|color)):([#a-z0-9]+) ([#a-z0-9]+) ([#a-z0-9]+) (?:\3)(;|\}| !)/Si'
-            ),
-            '$1:$2 $3 $4$5',
-            $css
-        );
-
-        // shorten opacity IE filter
-        $css = preg_replace('/progid:DXImageTransform\.Microsoft\.Alpha\(Opacity=/Si', 'alpha(opacity=', $css);
-
-        // Find a fraction that is used for Opera's -o-device-pixel-ratio query
-        // Add token to add the "/" back in later
-        $css = preg_replace('/\(([a-z-]+):([0-9]+)\/([0-9]+)\)/Si', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
-
-        // Patch new lines to avoid being removed when followed by empty rules cases
-        $css = preg_replace('/'. self::NL .'/', self::NL .'}', $css);
-
-        // Remove empty rules: First pass.
-        $css = preg_replace('/[^{};\/]+\{\}/S', '', $css);
-
-        // Remove empty rules: Second pass to remove blocks whose only content is an empty rule removed in first pass.
-        $css = preg_replace('/[^{};\/]+\{\}/S', '', $css);
-
-        // Restore new lines for /*! important comments
-        $css = preg_replace('/'. self::NL .'\}/', "\n", $css);
-
-        // Add "/" back to fix Opera -o-device-pixel-ratio query
-        $css = preg_replace('/'. self::QUERY_FRACTION .'/', '/', $css);
-
-        // Lowercase all uppercase properties
-        $css = preg_replace_callback('/(\{|;)([A-Z-]+)(:)/S', function ($matches) {
-            return $matches[1] . strtolower($matches[2]) . $matches[3];
-        }, $css);
-
-        // Trim the final string for any leading or trailing white space but respect newlines!
-        return trim($css, ' ');
+        return trim($css);
     }
 
     /**
@@ -623,21 +382,19 @@ class Minifier
      */
     private function processDataUrls($css)
     {
-        $sb = array();
+        $ret = '';
         $searchOffset = $substrOffset = 0;
-        $pattern = '/url\(\s*(["\']?)data:/i';
 
         // Since we need to account for non-base64 data urls, we need to handle
         // ' and ) being part of the data string.
-        while (preg_match($pattern, $css, $m, PREG_OFFSET_CAPTURE, $searchOffset)) {
+        while (preg_match('/url\(\s*(["\']?)data:/Si', $css, $m, PREG_OFFSET_CAPTURE, $searchOffset)) {
             $matchStartIndex = $m[0][1];
             $dataStartIndex = $matchStartIndex + 4; // url( length
             $searchOffset = $matchStartIndex + strlen($m[0][0]);
             $terminator = $m[1][0]; // ', " or empty (not quoted)
-            $terminatorRegex = strlen($terminator) === 0 ? '/(?<!\\\\)(\))/' : '/(?<!\\\\)'.$terminator.'\s*(\))/';
-
-            // Start moving stuff over to the buffer
-            $sb[] = substr($css, $substrOffset, $matchStartIndex - $substrOffset);
+            $terminatorRegex = '/(?<!\\\\)'. (strlen($terminator) === 0 ? '' : $terminator.'\s*') .'(\))/S';
+            
+            $ret .= substr($css, $substrOffset, $matchStartIndex - $substrOffset);
 
             // Terminator found
             if (preg_match($terminatorRegex, $css, $matches, PREG_OFFSET_CAPTURE, $searchOffset)) {
@@ -646,33 +403,65 @@ class Minifier
                 $token = substr($css, $dataStartIndex, $matchEndIndex - $dataStartIndex);
 
                 // Remove all spaces only for base64 encoded URLs.
-                if (preg_match('/base64,/si', $token)) {
-                    $token = preg_replace('/\s+/', '', $token);
+                if (stripos($token, 'base64,') !== false) {
+                    $token = preg_replace('/\s+/S', '', $token);
                 }
 
-                $sb[] = 'url('. $this->registerPreservedToken(trim($token)) .')';
+                $ret .= 'url('. $this->registerPreservedToken(trim($token)) .')';
             // No end terminator found, re-add the whole match. Should we throw/warn here?
             } else {
-                $sb[] = substr($css, $matchStartIndex, $searchOffset - $matchStartIndex);
+                $ret .= substr($css, $matchStartIndex, $searchOffset - $matchStartIndex);
             }
 
             $substrOffset = $searchOffset;
         }
 
-        $sb[] = substr($css, $substrOffset);
+        $ret .= substr($css, $substrOffset);
 
-        return implode('', $sb);
+        return $ret;
     }
 
     /**
      * Registers all comments found as candidates to be preserved.
-     * @param $matches
+     * @param array $matches
      * @return string
      */
     private function processCommentsCallback($matches)
     {
-        $match = !empty($matches[1]) ? $matches[1] : '';
-        return '/*'. $this->registerComment($match) .'*/';
+        return '/*'. $this->registerCommentToken($matches[1]) .'*/';
+    }
+
+    /**
+     * Preserves old IE Matrix string definition
+     * @param array $matches
+     * @return string
+     */
+    private function processOldIeSpecificMatrixDefinitionCallback($matches)
+    {
+        return 'filter:progid:DXImageTransform.Microsoft.Matrix('. $this->registerPreservedToken($matches[1]) .')';
+    }
+
+    /**
+     * Preserves strings found
+     * @param array $matches
+     * @return string
+     */
+    private function processStringsCallback($matches)
+    {
+        $match = $matches[0];
+        $quote = substr($match, 0, 1);
+        $match = substr($match, 1, -1);
+
+        // maybe the string contains a comment-like substring?
+        // one, maybe more? put'em back then
+        if (strpos($match, self::COMMENT_TOKEN_START) !== false) {
+            $match = str_replace(array_keys($this->comments), array_values($this->comments), $match);
+        }
+
+        // minify alpha opacity in filter strings
+        $match = str_ireplace('progid:DXImageTransform.Microsoft.Alpha(Opacity=', 'alpha(opacity=', $match);
+
+        return $quote . $this->registerPreservedToken($match) . $quote;
     }
 
     /**
@@ -684,13 +473,11 @@ class Minifier
     private function processComments($css, $keepSourceMap)
     {
         foreach ($this->comments as $commentId => $comment) {
-            $commentIdRegex = '/'. $commentId .'/';
-
             // ! in the first position of the comment means preserve
             // so push to the preserved tokens keeping the !
-            if (preg_match('/^!/', $comment)) {
+            if (strpos($comment, '!') === 0) {
                 $preservedTokenId = $this->registerPreservedToken($comment);
-                $css = preg_replace($commentIdRegex, $preservedTokenId, $css, 1);
+                $css = str_replace($commentId, $preservedTokenId, $css);
                 // Preserve new lines for /*! important comments
                 $css = preg_replace('/\R+\s*(\/\*'. $preservedTokenId .')/', self::NL.'$1', $css);
                 $css = preg_replace('/('. $preservedTokenId .'\*\/)\s*\R+/', '$1'.self::NL, $css);
@@ -699,96 +486,153 @@ class Minifier
 
             // # sourceMappingURL= in the first position of the comment means sourcemap
             // so push to the preserved tokens if keepSourcemap is truthy.
-            if ($keepSourceMap && preg_match('/^# sourceMappingURL=/', $comment)) {
+            if ($keepSourceMap && strpos($comment, '# sourceMappingURL=') === 0) {
                 $preservedTokenId = $this->registerPreservedToken($comment);
-                $css = preg_replace($commentIdRegex, $preservedTokenId, $css, 1);
+                $css = str_replace($commentId, $preservedTokenId, $css);
                 // Add new line before the sourcemap comment
-                $css = preg_replace('/(\/\*'. $preservedTokenId .')/', self::NL.'$1', $css);
+                $css = preg_replace('/(\/\*'. $preservedTokenId .')/', self::NL.'$1', $css, 1);
                 continue;
             }
 
             // keep empty comments after child selectors (IE7 hack)
             // e.g. html >/**/ body
-            if (strlen($comment) === 0 && preg_match('/>\/\*'.$commentId.'/', $css)) {
-                $css = preg_replace($commentIdRegex, $this->registerPreservedToken(''), $css, 1);
+            if (strlen($comment) === 0 && strpos($css, '>/*'.$commentId) !== false) {
+                $css = str_replace($commentId, $this->registerPreservedToken(''), $css);
                 continue;
             }
 
             // in all other cases kill the comment
-            $css = preg_replace('/\/\*' . $commentId . '\*\//', '', $css, 1);
+            $css = str_replace('/*'. $commentId .'*/', '', $css);
         }
 
         return $css;
     }
 
     /**
-     * Preserves old IE Matrix string definition
-     * @param $matches
+     * Finds, minifies & preserves all rule bodies.
+     * @param string $css the whole stylesheet.
      * @return string
      */
-    private function processOldIeSpecificMatrixDefinitionCallback($matches)
+    private function processRuleBodies($css)
     {
-        return 'filter:progid:DXImageTransform.Microsoft.Matrix('. $this->registerPreservedToken($matches[1]) .')';
-    }
+        $ret = '';
+        $searchOffset = $substrOffset = 0;
 
-    /**
-     * Preserves strings found
-     * @param $matches
-     * @return string
-     */
-    private function processStringsCallback($matches)
-    {
-        $match = $matches[0];
-        $quote = substr($match, 0, 1);
-        $match = substr($match, 1, -1);
+        while (($blockStartPos = strpos($css, '{', $searchOffset)) !== false) {
+            $blockEndPos = strpos($css, '}', $blockStartPos);
+            $nextBlockStartPos = strpos($css, '{', $blockStartPos + 1);
+            $ret .= substr($css, $substrOffset, $blockStartPos - $substrOffset);
 
-        // maybe the string contains a comment-like substring?
-        // one, maybe more? put'em back then
-        if (($pos = strpos($match, self::COMMENT)) !== false) {
-            foreach ($this->comments as $commentId => $comment) {
-                $match = preg_replace('/'. $commentId .'/', Utils::escapeReplacementString($comment), $match, 1);
+            if ($nextBlockStartPos !== false && $nextBlockStartPos < $blockEndPos) {
+                $ret .= substr($css, $blockStartPos, $nextBlockStartPos - $blockStartPos);
+                $searchOffset = $nextBlockStartPos;
+            } else {
+                $ruleBody = substr($css, $blockStartPos + 1, $blockEndPos - $blockStartPos - 1);
+                $ruleBodyToken = $this->registerRuleBodyToken($this->processRuleBody($ruleBody));
+                $ret .= '{'. $ruleBodyToken .'}';
+                $searchOffset = $blockEndPos + 1;
             }
+
+            $substrOffset = $searchOffset;
         }
 
-        // minify alpha opacity in filter strings
-        $match = preg_replace('/progid:DXImageTransform\.Microsoft\.Alpha\(Opacity=/i', 'alpha(opacity=', $match);
+        $ret .= substr($css, $substrOffset);
 
-        return $quote . $this->registerPreservedToken($match) . $quote;
+        return $ret;
     }
 
     /**
-     * Preserves temporarily At-rule blocks found for safe chunking.
-     * @param $matches
+     * Compresses non-group rule bodies.
+     * @param string $body The rule body without curly braces
      * @return string
      */
-    private function processAtRuleBlocksCallback($matches)
+    private function processRuleBody($body)
     {
-        return $this->registerAtRuleBlock($matches[0]);
-    }
+        $body = trim($body);
 
-    /**
-     * Preserves and shortens calculations since spaces inside them are very important.
-     * @param $matches
-     * @return string
-     */
-    private function processCalcCallback($matches)
-    {
-        $token = preg_replace('/ (\+|-) /', '_$1_', trim($matches[2]));
-        $token = preg_replace('/ ?(\*|\/|\(|\)|,) ?/S', '$1', $token);
-        $token = preg_replace('/_(\+|-)_/', ' $1 ', $token);
-        return 'calc('. $this->registerPreservedToken($token) .')';
-    }
+        // Remove spaces before the things that should not have spaces before them.
+        $body = preg_replace('/ ([:=,)*\/;])/S', '$1', $body);
 
-    /**
-     * Shortens all zero values for a set of safe properties
-     * e.g. padding: 0px 1px; -> padding:0 1px
-     * e.g. padding: 0px 0rem 0em 0.0pc; -> padding:0
-     * @param string $css
-     * @return string
-     */
-    private function shortenZeroValues($css)
-    {
-        $css = preg_replace(
+        // Remove the spaces after the things that should not have spaces after them.
+        $body = preg_replace('/([:=,(*\/!;]) /S', '$1', $body);
+        
+        // Replace multiple semi-colons in a row by a single one
+        $body = preg_replace('/;;+/S', ';', $body);
+
+        // Remove semicolon before closing brace except when:
+        // - The last property is prefixed with a `*` (lte IE7 hack) to avoid issues on Symbian S60 3.x browsers.
+        if (!preg_match('/\*[a-z0-9-]+:[^;]+;$/Si', $body)) {
+            $body = rtrim($body, ';');
+        }
+        
+        // Empty rule body? Exit :)
+        if (empty($body)) {
+            return '';
+        }
+
+        // Shorten font-weight values
+        $body = preg_replace(
+            array('/(font-weight:)bold\b/Si', '/(font-weight:)normal\b/Si'),
+            array('${1}700', '${1}400'),
+            $body
+        );
+
+        // Shorten background property
+        $body = preg_replace('/(background:)(?:none|transparent)( !|;|$)/Si', '${1}0 0$2', $body);
+
+        // Shorten opacity IE filter
+        $body = str_ireplace('progid:DXImageTransform.Microsoft.Alpha(Opacity=', 'alpha(opacity=', $body);
+
+        // Shorten colors from rgb(51,102,153) to #336699, rgb(100%,0%,0%) to #ff0000 (sRGB color space)
+        // Shorten colors from hsl(0, 100%, 50%) to #ff0000 (sRGB color space)
+        // This makes it more likely that it'll get further compressed in the next step.
+        $body = preg_replace_callback(
+            '/(rgb|hsl)\(([0-9,.% -]+)\)(.|$)/Si',
+            array($this, 'shortenHslAndRgbToHexCallback'),
+            $body
+        );
+
+        // Shorten colors from #AABBCC to #ABC or shorter color name:
+        // - Look for hex colors which don't have a "=" in front of them (to avoid MSIE filters)
+        $body = preg_replace_callback(
+            '/(?<!=)#([0-9a-f]{3,6})( |,|\)|;|$)/Si',
+            array($this, 'shortenHexColorsCallback'),
+            $body
+        );
+
+        // Shorten long named colors with a shorter HEX counterpart: white -> #fff.
+        // Run at least 2 times to cover most cases
+        $body = preg_replace_callback(
+            array($this->namedToHexColorsRegex, $this->namedToHexColorsRegex),
+            array($this, 'shortenNamedColorsCallback'),
+            $body
+        );
+
+        // Replace positive sign from numbers preceded by : or , or white-space before the leading space is removed.
+        // +1.2em to 1.2em, +.8px to .8px, +2% to 2%
+        $body = preg_replace('/([ :,(])\+(\.?\d+)/S', '$1$2', $body);
+
+        // shorten ms to s
+        $body = preg_replace_callback('/([ :,(])(-?)(\d{3,})ms/Si', function ($matches) {
+            return $matches[1] . $matches[2] . ((int) $matches[3] / 1000) .'s';
+        }, $body);
+
+        // Remove leading zeros from integer and float numbers preceded by : or , or white-space.
+        // 000.6 to .6, -0.8 to -.8, 0050 to 50, -01.05 to -1.05
+        $body = preg_replace('/([ :,(])(-?)0+([1-9]?\.?\d+)/S', '$1$2$3', $body);
+
+        // Remove trailing zeros from float numbers preceded by : or , or white-space.
+        // -6.0100em to -6.01em, .0100 to .01, 1.200px to 1.2px
+        $body = preg_replace('/([ :,(])(-?\d?\.\d+?)0+([^\d])/S', '$1$2$3', $body);
+
+        // Remove trailing .0 -> -9.0 to -9
+        $body = preg_replace('/([ :,(])(-?\d+)\.0([^\d])/S', '$1$2$3', $body);
+
+        // Replace 0 length numbers with 0
+        $body = preg_replace('/([ :,(])-?\.?0+([^\d])/S', '${1}0$2', $body);
+
+        // Shorten zero values for safe properties only
+        $body = preg_replace(
             array(
                 $this->shortenOneZeroesRegex,
                 $this->shortenTwoZeroesRegex,
@@ -801,53 +645,179 @@ class Minifier
                 '$1$2:$3 $4 0',
                 '$1$2:$3 $4 $5 0'
             ),
+            $body
+        );
+
+        // Replace 0 0 0; or 0 0 0 0; with 0 0 for background-position property.
+        $body = preg_replace('/(background-position):0(?: 0){2,3}( !|;|$)/Si', '$1:0 0$2', $body);
+
+        // Shorten suitable shorthand properties with repeated values
+        $body = preg_replace(
+            array(
+                '/(margin|padding|border-(?:width|radius)):('.$this->numRegex.')(?: \2)+( !|;|$)/Si',
+                '/(border-(?:style|color)):([#a-z0-9]+)(?: \2)+( !|;|$)/Si'
+            ),
+            '$1:$2$3',
+            $body
+        );
+        $body = preg_replace(
+            array(
+                '/(margin|padding|border-(?:width|radius)):'.
+                '('.$this->numRegex.') ('.$this->numRegex.') \2 \3( !|;|$)/Si',
+                '/(border-(?:style|color)):([#a-z0-9]+) ([#a-z0-9]+) \2 \3( !|;|$)/Si'
+            ),
+            '$1:$2 $3$4',
+            $body
+        );
+        $body = preg_replace(
+            array(
+                '/(margin|padding|border-(?:width|radius)):'.
+                '('.$this->numRegex.') ('.$this->numRegex.') ('.$this->numRegex.') \3( !|;|$)/Si',
+                '/(border-(?:style|color)):([#a-z0-9]+) ([#a-z0-9]+) ([#a-z0-9]+) \3( !|;|$)/Si'
+            ),
+            '$1:$2 $3 $4$5',
+            $body
+        );
+
+        // Lowercase some common functions that can be values
+        $body = preg_replace_callback(
+            '/(attr|blur|brightness|circle|contrast|cubic-bezier|drop-shadow|ellipse|from|grayscale|'.
+            'hsla?|hue-rotate|inset|invert|local|minmax|opacity|perspective|polygon|rgba?|rect|repeat|saturate|sepia|'.
+            'steps|to|url|var|-webkit-gradient|'.
+            '(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?(?:calc|(?:repeating-)?(?:linear|radial)-gradient))\(/Si',
+            function ($matches) {
+                return strtolower($matches[1]) .'(';
+            },
+            $body
+        );
+
+        // Lowercase all uppercase properties
+        $body = preg_replace_callback('/(?:^|;)[A-Z-]+:/S', function ($matches) {
+            return strtolower($matches[0]);
+        }, $body);
+
+        return $body;
+    }
+
+    /**
+     * Compresses At-rules and selectors.
+     * @param string $css the whole stylesheet with rule bodies tokenized.
+     * @return string
+     */
+    private function processAtRulesAndSelectors($css)
+    {
+        $charset = '';
+        $imports = '';
+        $namespaces = '';
+        
+        // Remove spaces before the things that should not have spaces before them.
+        $css = preg_replace('/ ([@{};>+)\]~=,])/S', '$1', $css);
+
+        // Remove the spaces after the things that should not have spaces after them.
+        $css = preg_replace('/([{}:;>+(\[~=,]) /S', '$1', $css);
+        
+        // Shorten shortable double colon (CSS3) pseudo-elements to single colon (CSS2)
+        $css = preg_replace('/::(before|after|first-(?:line|letter))(\{|,)/Si', ':$1$2', $css);
+
+        // Retain space for special IE6 cases
+        $css = preg_replace_callback('/:first-(line|letter)(\{|,)/Si', function ($matches) {
+            return ':first-'. strtolower($matches[1]) .' '. $matches[2];
+        }, $css);
+
+        // Find a fraction that may used in some @media queries such as: (min-aspect-ratio: 1/1)
+        // Add token to add the "/" back in later
+        $css = preg_replace('/\(([a-z-]+):([0-9]+)\/([0-9]+)\)/Si', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
+
+        // Remove empty rule blocks up to 3 levels deep.
+        $css = preg_replace(array_fill(0, 3, '/[^{};\/]+\{\}/S'), '', $css);
+        
+        // Restore fraction
+        $css = str_replace(self::QUERY_FRACTION, '/', $css);
+
+        // Lowercase some popular @directives
+        $css = preg_replace_callback(
+            '/(?<!\\\\)@(charset|document|font-face|import|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|' .
+            'namespace|page|supports|viewport)/Si',
+            function ($matches) {
+                return '@'. strtolower($matches[1]);
+            },
             $css
         );
 
-        // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0 for safe properties only.
-        $css = preg_replace('/(margin|padding):0(?: 0){1,3}(;|\}| !)/Si', '$1:0$2', $css);
+        // Lowercase some popular media types
+        $css = preg_replace_callback(
+            '/[ ,](?:all|aural|braille|handheld|print|projection|screen|tty|tv|embossed|speech)[ ,;{]/Si',
+            function ($matches) {
+                return strtolower($matches[0]);
+            },
+            $css
+        );
 
-        // Replace 0 0 0; or 0 0 0 0; with 0 0 for background-position property.
-        $css = preg_replace('/(background-position):0(?: 0){2,3}(;|\}| !)/Si', '$1:0 0$2', $css);
+        // Lowercase some common pseudo-classes & pseudo-elements
+        $css = preg_replace_callback(
+            '/(?<!\\\\):(active|after|before|checked|default|disabled|empty|enabled|first-(?:child|of-type)|'.
+            'focus(?:-within)?|hover|indeterminate|in-range|invalid|lang\(|last-(?:child|of-type)|left|link|not\(|'.
+            'nth-(?:child|of-type)\(|nth-last-(?:child|of-type)\(|only-(?:child|of-type)|optional|out-of-range|'.
+            'read-(?:only|write)|required|right|root|:selection|target|valid|visited)/Si',
+            function ($matches) {
+                return ':'. strtolower($matches[1]);
+            },
+            $css
+        );
+        
+        // @charset handling
+        if (preg_match($this->charsetRegex, $css, $matches)) {
+            // Keep the first @charset at-rule found
+            $charset = $matches[0];
+            // Delete all @charset at-rules
+            $css = preg_replace($this->charsetRegex, '', $css);
+        }
+
+        // @import handling
+        $css = preg_replace_callback($this->importRegex, function ($matches) use (&$imports) {
+            // Keep all @import at-rules found for later
+            $imports .= $matches[0];
+            // Delete all @import at-rules
+            return '';
+        }, $css);
+
+        // @namespace handling
+        $css = preg_replace_callback($this->namespaceRegex, function ($matches) use (&$namespaces) {
+            // Keep all @namespace at-rules found for later
+            $namespaces .= $matches[0];
+            // Delete all @namespace at-rules
+            return '';
+        }, $css);
+        
+        // Order critical at-rules:
+        // 1. @charset first
+        // 2. @imports below @charset
+        // 3. @namespaces below @imports
+        $css = $charset . $imports . $namespaces . $css;
 
         return $css;
     }
 
     /**
-     * Converts rgb() colors to HEX format.
+     * Converts hsl() & rgb() colors to HEX format.
      * @param $matches
      * @return string
      */
-    private function rgbToHexCallback($matches)
+    private function shortenHslAndRgbToHexCallback($matches)
     {
-        $hexColors = Utils::rgbToHex(explode(',', $matches[1]));
-        return $this->getHexColorStringFromHexColorsList($hexColors, $matches[2]);
-    }
+        $type = $matches[1];
+        $values = explode(',', $matches[2]);
+        $terminator = $matches[3];
+        
+        if ($type === 'hsl') {
+            $values = Utils::hslToRgb($values);
+        }
+        
+        $hexColors = Utils::rgbToHex($values);
 
-    /**
-     * Converts hsl() color to HEX format.
-     * @param $matches
-     * @return string
-     */
-    private function hslToHexCallback($matches)
-    {
-        $hslValues = explode(',', $matches[1]);
-        $rgbColors = Utils::hslToRgb($hslValues);
-        $hexColors = Utils::rgbToHex($rgbColors);
-        return $this->getHexColorStringFromHexColorsList($hexColors, $matches[2]);
-    }
-
-    /**
-     * Given a list of HEX colors and a terminator, a HEX color string is returned with the supplied terminator added
-     * at the end.
-     * @param array $hexColors
-     * @param string $terminator
-     * @return string
-     */
-    private function getHexColorStringFromHexColorsList($hexColors, $terminator)
-    {
-        // Fix for issue #2528093: restore space after rgb() or hsl() function in some cases
-        if (!preg_match('/[ ,);}]/', $terminator)) {
+        // Restore space after rgb() or hsl() function in some cases such as:
+        // background-image: linear-gradient(to bottom, rgb(210,180,140) 10%, rgb(255,0,0) 90%);
+        if (!empty($terminator) && !preg_match('/[ ,);]/S', $terminator)) {
             $terminator = ' '. $terminator;
         }
 
@@ -856,43 +826,25 @@ class Minifier
 
     /**
      * Compresses HEX color values of the form #AABBCC to #ABC or short color name.
-     *
-     * DOES NOT compress CSS ID selectors which match the above pattern (which would break things).
-     * e.g. #AddressForm { ... }
-     *
-     * DOES NOT compress IE filters, which have hex color values (which would break things).
-     * e.g. filter: chroma(color="#FFFFFF");
-     *
-     * DOES NOT compress invalid hex values.
-     * e.g. background-color: #aabbccdd
-     *
      * @param $matches
      * @return string
      */
     private function shortenHexColorsCallback($matches)
     {
-        $isFilter = $matches[1] !== null && $matches[1] !== '';
-
-        if ($isFilter) {
-            // Restore, maintain case, otherwise filter will break
-            $color = '#'. $matches[2] . $matches[3] . $matches[4] . $matches[5] . $matches[6] . $matches[7];
-        } else {
-            if (preg_match('/#([0-9a-f])(?:\1)([0-9a-f])(?:\2)([0-9a-f])(?:\3)/Si', $matches[0])) {
-                // Compress.
-                $hex = $matches[3] . $matches[5] . $matches[7];
-            } else {
-                // Non compressible color, restore.
-                $hex = $matches[2] . $matches[3] . $matches[4] . $matches[5] . $matches[6] . $matches[7];
-            }
-
-            // lower case
-            $hex = '#'. strtolower($hex);
-
-            // replace Hex colors with shorter color names
-            $color = array_key_exists($hex, $this->hexToNamedColorsMap) ? $this->hexToNamedColorsMap[$hex] : $hex;
+        $hex = $matches[1];
+        
+        // Shorten suitable 6 chars HEX colors
+        if (strlen($hex) === 6 && preg_match('/^([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3$/Si', $hex, $m)) {
+            $hex = $m[1] . $m[2] . $m[3];
         }
+        
+        // Lowercase
+        $hex = '#'. strtolower($hex);
 
-        return $matches[1] . $color . $matches[8];
+        // Replace Hex colors with shorter color names
+        $color = array_key_exists($hex, $this->hexToNamedColorsMap) ? $this->hexToNamedColorsMap[$hex] : $hex;
+
+        return $color . $matches[2];
     }
 
     /**

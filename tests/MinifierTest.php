@@ -12,7 +12,6 @@ class MinifierTest extends PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->cssmin = new Minifier;
-        $this->cssmin->setChunkLength(rand(100, 200));
     }
 
     protected function getExpectation($name)
@@ -216,11 +215,6 @@ class MinifierTest extends PHPUnit_Framework_TestCase
         $this->execTest('lowercasing');
     }
 
-    public function testNestedAtRules()
-    {
-        $this->execTest('nested-at-rules');
-    }
-
     public function testNumbers()
     {
         $this->execTest('numbers');
@@ -290,43 +284,36 @@ class MinifierTest extends PHPUnit_Framework_TestCase
 
     public function testBootstrap()
     {
-        $this->cssmin->setChunkLength(rand(3000, 6000));
         $this->execTest('bootstrap');
     }
 
     public function testBulma()
     {
-        $this->cssmin->setChunkLength(rand(3000, 6000));
         $this->execTest('bulma');
     }
 
     public function testFoundation()
     {
-        $this->cssmin->setChunkLength(rand(3000, 6000));
         $this->execTest('foundation');
     }
 
     public function testKube()
     {
-        $this->cssmin->setChunkLength(rand(3000, 6000));
         $this->execTest('kube');
     }
 
     public function testMaterialize()
     {
-        $this->cssmin->setChunkLength(rand(3000, 6000));
         $this->execTest('materialize');
     }
 
     public function testMui()
     {
-        $this->cssmin->setChunkLength(rand(3000, 6000));
         $this->execTest('mui');
     }
 
     public function testPure()
     {
-        $this->cssmin->setChunkLength(rand(3000, 6000));
         $this->execTest('pure');
     }
 

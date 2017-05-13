@@ -8,13 +8,13 @@
     border: none
 }
 
-@SUPPORTS only screen {
+@SUPPORTS only SCREEN {
     @KEYFRAMES test{ color:blue }
 }
 
 @IMPORT "HTTP://DOMAIN.TLD/OTHER.CSS";
 
-@MEDIA print {
+@MEDIA PRINT {
     BACKGROUND: NONE;
     BACKGROUND-POSITION: 0 0;
 }

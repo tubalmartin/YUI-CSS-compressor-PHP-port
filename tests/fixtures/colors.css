@@ -24,6 +24,7 @@
 /* HEX */
 b {
     color: #fffff0;
+    color: #f00;
 }
 .color {
     impressed: #FfEedD;
@@ -41,7 +42,7 @@ b {
     filter:chroma(color='#BBDDEE');
     color:#112233
 }
-#AABBCC {
+#AABBCC, #ffffff, #f0f0f0, #f00 {
     background-color:#ffee11;
     filter: chroma(color = #FFFFFF );
     color:#441122;

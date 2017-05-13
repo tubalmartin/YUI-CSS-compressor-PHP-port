@@ -27,16 +27,6 @@ class Utils
     }
 
     /**
-     * Escapes backreferences such as \1 and $1 in a regular expression replacement string
-     * @param $string
-     * @return string
-     */
-    public static function escapeReplacementString($string)
-    {
-        return addcslashes($string, '\\$');
-    }
-
-    /**
      * Converts a HSL color into a RGB color
      * @param array $hslValues
      * @return array

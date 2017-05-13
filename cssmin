@@ -34,4 +34,4 @@ require $autoloadPath;
 
 unset($autoloadPath);
 
-Command::run();
+Command::main();

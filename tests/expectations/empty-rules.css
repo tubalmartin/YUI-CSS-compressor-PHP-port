@@ -1,2 +1,2 @@
-/*! dont delete me */
-@import "another.css";.test{color:red}@media screen{.printonly{display:none}}
+@import "another.css";/*! dont delete me */
+.test{color:red}@media screen{.printonly{display:none}}

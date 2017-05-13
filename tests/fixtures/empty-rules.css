@@ -23,3 +23,13 @@ a[href$="/test/"] span.test{}
     .breakme {}
     .printonly { display: none; }
 }
+
+@media print {
+    /* empty */
+    @media (min-aspect-ratio: 1/1) {
+        /* empty */
+        a {
+            /* empty */
+        }
+    }
+}
