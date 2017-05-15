@@ -48,7 +48,6 @@ if (!empty($_POST)) :
     parse_str($_POST['options']);
 
     $linebreak_pos = trim($linebreak_pos) !== '' ? $linebreak_pos : false;
-    $keep_sourcemap = isset($keep_sourcemap) ? true : false;
     $raise_php = isset($raise_php) ? true : false;
 
     // Create a new CSSmin object and try to raise PHP settings
@@ -58,8 +57,12 @@ if (!empty($_POST)) :
         $compressor->setLineBreakPosition($linebreak_pos);
     }
 
-    if ($keep_sourcemap !== false) {
-        $compressor->keepSourceMap($keep_sourcemap);
+    if (isset($keep_sourcemap)) {
+        $compressor->keepSourceMapComment();
+    }
+
+    if (isset($remove_important_comments)) {
+        $compressor->removeImportantComments();
     }
 
     if ($raise_php) {
@@ -139,6 +142,11 @@ else :
                         <div class="control-group">
                             <label class="checkbox">
                                 <input type="checkbox" name="keep_sourcemap" value="1"> Keep CSS Sourcemap comment
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label class="checkbox">
+                                <input type="checkbox" name="remove_important_comments" value="1"> Remove important comments
                             </label>
                         </div>
                     </fieldset>

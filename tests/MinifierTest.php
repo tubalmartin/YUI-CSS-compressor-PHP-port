@@ -24,13 +24,11 @@ class MinifierTest extends PHPUnit_Framework_TestCase
         return file_get_contents(__DIR__ .'/fixtures/'. $name .'.css');
     }
 
-    protected function execTest($expectationName, $fixtureName = null, $linebreakPos = null, $keepSourceMap = null)
+    protected function execTest($expectationName, $fixtureName = null)
     {
-        $fixtureName = is_null($fixtureName) ? $expectationName : $fixtureName;
-
         $this->assertEquals(
             $this->getExpectation($expectationName),
-            $this->cssmin->run($this->getFixture($fixtureName), $linebreakPos, $keepSourceMap)
+            $this->cssmin->run($this->getFixture(is_null($fixtureName) ? $expectationName : $fixtureName))
         );
     }
 
@@ -179,25 +177,13 @@ class MinifierTest extends PHPUnit_Framework_TestCase
         $this->execTest('important');
     }
 
-    public function testKeepSourcemapCommentArgument()
+    public function testKeepSourcemapComment()
     {
-        $this->cssmin->keepSourceMap(false);
-        $this->execTest('sourcemap-preserve', 'sourcemap', null, true);
+        $this->cssmin->keepSourceMapComment();
+        $this->execTest('sourcemap-comment-preserve', 'sourcemap-comment');
     }
 
-    public function testKeepSourcemapCommentSetter()
-    {
-        $this->cssmin->keepSourceMap();
-        $this->execTest('sourcemap-preserve', 'sourcemap');
-    }
-
-    public function testLinebreakPositionArgument()
-    {
-        $this->cssmin->setLineBreakPosition(30);
-        $this->execTest('linebreak-position', null, 10);
-    }
-
-    public function testLinebreakPositionSetter()
+    public function testLinebreakPosition()
     {
         $this->cssmin->setLineBreakPosition(10);
         $this->execTest('linebreak-position');
@@ -206,8 +192,8 @@ class MinifierTest extends PHPUnit_Framework_TestCase
     public function testLinebreakPositionDoubleNewline()
     {
         $this->cssmin->setLineBreakPosition(1);
-        $this->cssmin->keepSourceMap();
-        $this->execTest('sourcemap-preserve', 'sourcemap');
+        $this->cssmin->keepSourceMapComment();
+        $this->execTest('sourcemap-comment-preserve', 'sourcemap-comment');
     }
 
     public function testLowercasing()
@@ -240,9 +226,15 @@ class MinifierTest extends PHPUnit_Framework_TestCase
         $this->execTest('pseudo-elements');
     }
 
+    public function testRemoveImportantComments()
+    {
+        $this->cssmin->removeImportantComments();
+        $this->execTest('important-comments-remove', 'comments');
+    }
+
     public function testRemoveSourcemapComment()
     {
-        $this->execTest('sourcemap-remove', 'sourcemap');
+        $this->execTest('sourcemap-comment-remove', 'sourcemap-comment');
     }
 
     public function testSemicolons()

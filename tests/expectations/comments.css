@@ -1,3 +1,4 @@
+/*! test */
 /*! $LastChangedRevision: 81 $ $LastChangedDate: 2009-05-27 17:41:02 +0100 (Wed, 27 May 2009) $ */
 /*!
 $Header: /temp/dirname/filename.css 3 2/02/08 3:37p JSmith $
@@ -16,7 +17,9 @@ a{color:blue;width:5px;height:5px;margin:0}
 I said
 pre-
 serve! */
-a{color:red}/*! imp*/b{test:foo}
+a{color:red}
+/*! imp*/
+b{test:foo}
 /*! imp */
 html>/**/body p{color:blue;*width:auto;height:2%}a{a:1}
 /*!"preserve" me*/

@@ -24,21 +24,24 @@ class Command
                 'input:',
                 'output:',
                 'keep-sourcemap',
+                'keep-sourcemap-comment',
                 'linebreak-position:',
                 'memory-limit:',
                 'pcre-backtrack-limit:',
-                'pcre-recursion-limit:'
+                'pcre-recursion-limit:',
+                'remove-important-comments'
             )
         );
 
         $help = $this->getOpt(array('h', 'help'), $opts);
         $input = $this->getOpt(array('i', 'input'), $opts);
         $output = $this->getOpt(array('o', 'output'), $opts);
-        $keepSourceMap = $this->getOpt('keep-sourcemap', $opts);
+        $keepSourceMapComment = $this->getOpt(array('keep-sourcemap', 'keep-sourcemap-comment'), $opts);
         $linebreakPosition = $this->getOpt('linebreak-position', $opts);
         $memoryLimit = $this->getOpt('memory-limit', $opts);
         $backtrackLimit = $this->getOpt('pcre-backtrack-limit', $opts);
         $recursionLimit = $this->getOpt('pcre-recursion-limit', $opts);
+        $removeImportantComments = $this->getOpt('remove-important-comments', $opts);
 
         if (!is_null($help)) {
             $this->showHelp();
@@ -67,14 +70,18 @@ class Command
         
         $cssmin = new Minifier;
 
-        if (!is_null($keepSourceMap)) {
-            $cssmin->keepSourceMap();
+        if (!is_null($keepSourceMapComment)) {
+            $cssmin->keepSourceMapComment();
+        }
+
+        if (!is_null($removeImportantComments)) {
+            $cssmin->removeImportantComments();
         }
 
         if (!is_null($linebreakPosition)) {
             $cssmin->setLineBreakPosition($linebreakPosition);
         }
-
+        
         if (!is_null($memoryLimit)) {
             $cssmin->setMemoryLimit($memoryLimit);
         }
@@ -196,11 +203,12 @@ Usage: cssmin [options] -i <file> [-o <file>]
 Options:
     
   -h|--help                      Prints this usage information.
-  --keep-sourcemap               Keeps the sourcemap special comment in the output.
+  --keep-sourcemap[-comment]     Keeps the sourcemap special comment in the output.
   --linebreak-position <pos>     Splits long lines after a specific column in the output.
   --memory-limit <limit>         Sets the memory limit for this script.
   --pcre-backtrack-limit <limit> Sets the PCRE backtrack limit for this script.
   --pcre-recursion-limit <limit> Sets the PCRE recursion limit for this script.
+  --remove-important-comments    Removes !important comments from output.
 
 EOT;
     }

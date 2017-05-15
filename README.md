@@ -76,7 +76,10 @@ $compressor = new CSSmin;
 
 // Keep sourcemap comment in the output.
 // Default behavior removes it.
-$compressor->keepSourceMap();
+$compressor->keepSourceMapComment();
+
+// Remove important comments from output.
+$compressor->removeImportantComments();
 
 // Split long lines in the output approximately every 1000 chars.
 $compressor->setLineBreakPosition(1000);
@@ -94,11 +97,9 @@ $output_css = $compressor->run($input_css);
 // Let's say you want to remove the sourcemap comment from the output and
 // disable splitting long lines in the output.
 // You can achieve that using the methods `keepSourceMap` and `setLineBreakPosition`:
-$compressor->keepSourceMap(false);
+$compressor->keepSourceMapComment(false);
 $compressor->setLineBreakPosition(0);
-$output_css = $compressor->run($input_css);
-// Or you can achieve the same thing passing a second & third arguments to the `run` method:
-$output_css = $compressor->run($input_css, 0, false); 
+$output_css = $compressor->run($input_css); 
 
 // Do whatever you need with the compressed CSS code
 echo $output_css;
@@ -176,8 +177,6 @@ Here's how to use it:
 
 ### __construct([ bool *$raisePhpLimits* ])
 
-**Description**
-
 Class constructor, creates a new CSSmin object.
 
 **Parameters**
@@ -188,9 +187,7 @@ If TRUE, CSSmin will try to raise the values of some php configuration options.
 Set to FALSE to keep the values of your php configuration options.
 Defaults to TRUE.
 
-### run(string *$css* [, int *$linebreakPosition*, bool *$keepSourceMap* ])
-
-**Description**
+### run(string *$css*)
 
 Minifies a string of uncompressed CSS code.
 `run()` may be called multiple times on a single CSSmin instance.
@@ -200,100 +197,56 @@ Minifies a string of uncompressed CSS code.
 *css*
 
 A string of uncompressed CSS code.
-Defaults to an empty string `''`.
-
-*linebreakPosition*
-
-Some source control tools don't like it when files containing lines longer than, say 8000 characters, are checked in.
-The linebreak option is used in that case to split long lines after a specific column.
-Defaults to `0` (1 long line).
-
-*$keepSourceMap*
-
-Keep sourcemap comment in the output.
-Defaults to `false` (remove the source map comment from output).
+CSSmin default value: `''` (empty string).
 
 **Return Values**
 
 A string of compressed CSS code or an empty string if no string is passed.
 
-### keepSourceMap(bool *$keepSourceMap*)
+### keepSourceMapComment(bool *$keepSourceMap*)
 
-**Description**
+Sets whether to keep sourcemap comment `/*# sourceMappingURL=<path> */`in the output.  
+CSSmin default behavior: Sourcemap comment gets removed from output.
 
-Keep sourcemap comment `/*# sourceMappingURL=<path> */`in the output.
+### removeImportantComments(bool *$removeImportantComments*)
 
-CSSmin default value: `false`
+Sets whether to remove important comments from output.  
+CSSmin default behavior: Important comments outside declaration blocks are kept in the output.
 
 ### setLinebreakPosition(int *$position*)
-
-**Description**
 
 Some source control tools don't like it when files containing lines longer than, say 8000 characters, are checked in.
 The linebreak option is used in that case to split long lines after a specific column.
 
-CSSmin default value: `0` (1 long line).
-
-**Parameters**
-
-*position*
-
-Values & notes: Minimum value supported: `1`
+CSSmin default value: `0` (all CSS code in 1 long line).  
+Minimum value supported: `1`.
 
 ### setMaxExecutionTime(int *$seconds*)
 
-**Description**
-
 Sets the `max_execution_time` configuration option for this script
 
-CSSmin default value: `60`
-
-**Parameters**
-
-*seconds*
-
+CSSmin default value: `60`  
 Values & notes: [max_execution_time documentation](http://php.net/manual/en/info.configuration.php#ini.max-execution-time)
 
 ### setMemoryLimit(mixed *$limit*)
 
-**Description**
-
 Sets the `memory_limit` configuration option for this script
 
-CSSmin default value: `128M`
-
-**Parameters**
-
-*limit*
-
+CSSmin default value: `128M`  
 Values & notes: [memory_limit documentation](http://php.net/manual/en/ini.core.php#ini.memory-limit)
 
 ### setPcreBacktrackLimit(int *$limit*)
 
-**Description**
-
 Sets the `pcre.backtrack_limit` configuration option for this script
 
-CSSmin default value: `1000000`
-
-**Parameters**
-
-*limit*
-
+CSSmin default value: `1000000`  
 Values & notes: [pcre.backtrack_limit documentation](http://php.net/manual/en/pcre.configuration.php#ini.pcre.backtrack-limit)
 
 ### setPcreRecursionLimit(int *$limit*)
 
-**Description**
-
 Sets the `pcre.recursion_limit` configuration option for this script.
 
-CSSmin default value: `500000`
-
-**Parameters**
-
-*limit*
-
+CSSmin default value: `500000`  
 Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pcre.configuration.php#ini.pcre.recursion-limit)
 
 
@@ -310,6 +263,12 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 <a name="changelog"></a>
 
 ## 6. Changelog
+
+### v4.0.0 15 May 2017
+
+NEW:
+* API: Some method signatures have changed a bit. Review docs and CLI help.
+* Important comments `/*! ... */` can be optionally removed from output too.
 
 ### v3.3.0 13 May 2017
 

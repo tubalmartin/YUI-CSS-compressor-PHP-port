@@ -24,7 +24,6 @@ namespace tubalmartin\CssMin;
 
 class Minifier
 {
-    const NL = '/*_CSSMIN_NL_*/';
     const QUERY_FRACTION = '_CSSMIN_QF_';
     const COMMENT_TOKEN = '_CSSMIN_CMT_%d_';
     const COMMENT_TOKEN_START = '_CSSMIN_CMT_';
@@ -37,7 +36,8 @@ class Minifier
     private $preservedTokens = array();
     
     // Output options
-    private $keepSourceMap = false;
+    private $keepImportantComments = true;
+    private $keepSourceMapComment = false;
     private $linebreakPosition = 0;
     
     // PHP ini limits
@@ -85,15 +85,10 @@ class Minifier
     /**
      * Parses & minifies the given input CSS string
      * @param string $css
-     * @param int|null $linebreakPosition
-     * @param bool|null $keepSourceMap
      * @return string
      */
-    public function run($css = '', $linebreakPosition = null, $keepSourceMap = null)
+    public function run($css = '')
     {
-        $linebreakPosition = is_null($linebreakPosition) ? $this->linebreakPosition : (int) $linebreakPosition;
-        $keepSourceMap = is_null($keepSourceMap) ? $this->keepSourceMap : (bool) $keepSourceMap;
-        
         if (empty($css) || !is_string($css)) {
             return '';
         }
@@ -104,17 +99,27 @@ class Minifier
             $this->doRaisePhpLimits();
         }
 
-        return $this->minify($css, $linebreakPosition, $keepSourceMap);
+        return $this->minify($css);
     }
 
     /**
-     * Sets whether to keep or remove the sourcemap special comment.
-     * Sourcemaps are removed by default.
-     * @param bool $keepSourceMap
+     * Sets whether to keep or remove sourcemap special comment.
+     * Sourcemap comments are removed by default.
+     * @param bool $keepSourceMapComment
      */
-    public function keepSourceMap($keepSourceMap = true)
+    public function keepSourceMapComment($keepSourceMapComment = true)
     {
-        $this->keepSourceMap = (bool) $keepSourceMap;
+        $this->keepSourceMapComment = (bool) $keepSourceMapComment;
+    }
+
+    /**
+     * Sets whether to keep or remove important comments.
+     * Important comments outside of a declaration block are kept by default.
+     * @param bool $removeImportantComments
+     */
+    public function removeImportantComments($removeImportantComments = true)
+    {
+        $this->keepImportantComments = !(bool) $removeImportantComments;
     }
 
     /**
@@ -285,11 +290,9 @@ class Minifier
     /**
      * Parses & minifies the given input CSS string
      * @param string $css
-     * @param int $linebreakPosition
-     * @param bool $keepSourceMap
      * @return string
      */
-    private function minify($css, $linebreakPosition, $keepSourceMap)
+    private function minify($css)
     {
         // Process data urls
         $css = $this->processDataUrls($css);
@@ -323,35 +326,31 @@ class Minifier
             $css
         );
 
-        // Strings are safe, now wrestle the comments
-        $css = $this->processComments($css, $keepSourceMap);
-
         // Normalize all whitespace strings to single spaces. Easier to work with that way.
         $css = preg_replace('/\s+/S', ' ', $css);
         
+        // Process comments
+        $css = $this->processComments($css);
+        
+        // Process rule bodies
         $css = $this->processRuleBodies($css);
-
+        
+        // Process at-rules and selectors
         $css = $this->processAtRulesAndSelectors($css);
-
-        // No space after the end of a preserved comment
-        $css = str_replace('*/ ', '*/', $css);
 
         // Restore preserved rule bodies before splitting
         $css = str_replace(array_keys($this->ruleBodies), array_values($this->ruleBodies), $css);
 
-        // Restore new lines for /*! important comments
-        $css = str_replace(self::NL, "\n", $css);
-
         // Some source control tools don't like it when files containing lines longer
         // than, say 8000 characters, are checked in. The linebreak option is used in
         // that case to split long lines after a specific column.
-        if ($linebreakPosition > 0) {
+        if ($this->linebreakPosition > 0) {
             $l = strlen($css);
-            $offset = $linebreakPosition;
+            $offset = $this->linebreakPosition;
             while (preg_match('/(?<!\\\\)\}(?!\n)/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
                 $matchIndex = $matches[0][1];
                 $css = substr_replace($css, "\n", $matchIndex + 1, 0);
-                $offset = $matchIndex + 2 + $linebreakPosition;
+                $offset = $matchIndex + 2 + $this->linebreakPosition;
                 $l += 1;
                 if ($offset > $l) {
                     break;
@@ -458,34 +457,32 @@ class Minifier
     /**
      * Preserves or removes comments found.
      * @param string $css
-     * @param bool $keepSourceMap
      * @return string
      */
-    private function processComments($css, $keepSourceMap)
+    private function processComments($css)
     {
         foreach ($this->comments as $commentId => $comment) {
             // ! in the first position of the comment means preserve
             // so push to the preserved tokens keeping the !
-            if (strpos($comment, '!') === 0) {
+            if ($this->keepImportantComments && strpos($comment, '!') === 0) {
                 $preservedTokenId = $this->registerPreservedToken($comment);
                 $css = str_replace($commentId, $preservedTokenId, $css);
-                // Preserve new lines for /*! important comments
-                $css = preg_replace('/\R+\s*(\/\*'. $preservedTokenId .')/', self::NL.'$1', $css);
-                $css = preg_replace('/('. $preservedTokenId .'\*\/)\s*\R+/', '$1'.self::NL, $css);
+                // Put new lines before and after /*! important comments
+                $css = preg_replace('/\/\*'. $preservedTokenId .'\*\//', "\n$0\n", $css, 1);
                 continue;
             }
 
             // # sourceMappingURL= in the first position of the comment means sourcemap
-            // so push to the preserved tokens if keepSourcemap is truthy.
-            if ($keepSourceMap && strpos($comment, '# sourceMappingURL=') === 0) {
+            // so push to the preserved tokens if {$this->keepSourceMapComment} is truthy.
+            if ($this->keepSourceMapComment && strpos($comment, '# sourceMappingURL=') === 0) {
                 $preservedTokenId = $this->registerPreservedToken($comment);
                 $css = str_replace($commentId, $preservedTokenId, $css);
                 // Add new line before the sourcemap comment
-                $css = preg_replace('/(\/\*'. $preservedTokenId .')/', self::NL.'$1', $css, 1);
+                $css = preg_replace('/\/\*'. $preservedTokenId .'/', "\n$0", $css, 1);
                 continue;
             }
 
-            // keep empty comments after child selectors (IE7 hack)
+            // Keep empty comments after child selectors (IE7 hack)
             // e.g. html >/**/ body
             if (strlen($comment) === 0 && strpos($css, '>/*'.$commentId) !== false) {
                 $css = str_replace($commentId, $this->registerPreservedToken(''), $css);
@@ -495,6 +492,9 @@ class Minifier
             // in all other cases kill the comment
             $css = str_replace('/*'. $commentId .'*/', '', $css);
         }
+
+        // Normalize whitespace again
+        $css = preg_replace('/ +/S', ' ', $css);
 
         return $css;
     }
@@ -542,10 +542,10 @@ class Minifier
         $body = trim($body);
 
         // Remove spaces before the things that should not have spaces before them.
-        $body = preg_replace('/ ([:=,)*\/;])/S', '$1', $body);
+        $body = preg_replace('/ ([:=,)*\/;\n])/S', '$1', $body);
 
         // Remove the spaces after the things that should not have spaces after them.
-        $body = preg_replace('/([:=,(*\/!;]) /S', '$1', $body);
+        $body = preg_replace('/([:=,(*\/!;\n]) /S', '$1', $body);
         
         // Replace multiple semi-colons in a row by a single one
         $body = preg_replace('/;;+/S', ';', $body);
@@ -554,6 +554,11 @@ class Minifier
         // - The last property is prefixed with a `*` (lte IE7 hack) to avoid issues on Symbian S60 3.x browsers.
         if (!preg_match('/\*[a-z0-9-]+:[^;]+;$/Si', $body)) {
             $body = rtrim($body, ';');
+        }
+
+        // Remove important comments inside a rule body (because they make no sense here).
+        if (strpos($body, '/*') !== false) {
+            $body = preg_replace('/\n?\/\*[A-Z0-9_]+\*\/\n?/', '', $body);
         }
         
         // Empty rule body? Exit :)
@@ -599,7 +604,7 @@ class Minifier
             $body
         );
 
-        // Replace positive sign from numbers preceded by : or , or white-space before the leading space is removed.
+        // Replace positive sign from numbers before the leading space is removed.
         // +1.2em to 1.2em, +.8px to .8px, +2% to 2%
         $body = preg_replace('/([ :,(])\+(\.?\d+)/S', '$1$2', $body);
 
@@ -608,11 +613,11 @@ class Minifier
             return $matches[1] . $matches[2] . ((int) $matches[3] / 1000) .'s';
         }, $body);
 
-        // Remove leading zeros from integer and float numbers preceded by : or , or white-space.
+        // Remove leading zeros from integer and float numbers.
         // 000.6 to .6, -0.8 to -.8, 0050 to 50, -01.05 to -1.05
         $body = preg_replace('/([ :,(])(-?)0+([1-9]?\.?\d+)/S', '$1$2$3', $body);
 
-        // Remove trailing zeros from float numbers preceded by : or , or white-space.
+        // Remove trailing zeros from float numbers.
         // -6.0100em to -6.01em, .0100 to .01, 1.200px to 1.2px
         $body = preg_replace('/([ :,(])(-?\d?\.\d+?)0+([^\d])/S', '$1$2$3', $body);
 
@@ -672,20 +677,16 @@ class Minifier
 
         // Lowercase some common functions that can be values
         $body = preg_replace_callback(
-            '/(attr|blur|brightness|circle|contrast|cubic-bezier|drop-shadow|ellipse|from|grayscale|'.
+            '/(?:attr|blur|brightness|circle|contrast|cubic-bezier|drop-shadow|ellipse|from|grayscale|'.
             'hsla?|hue-rotate|inset|invert|local|minmax|opacity|perspective|polygon|rgba?|rect|repeat|saturate|sepia|'.
             'steps|to|url|var|-webkit-gradient|'.
             '(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?(?:calc|(?:repeating-)?(?:linear|radial)-gradient))\(/Si',
-            function ($matches) {
-                return strtolower($matches[1]) .'(';
-            },
+            array($this, 'strtolowerCallback'),
             $body
         );
 
         // Lowercase all uppercase properties
-        $body = preg_replace_callback('/(?:^|;)[A-Z-]+:/S', function ($matches) {
-            return strtolower($matches[0]);
-        }, $body);
+        $body = preg_replace_callback('/(?:^|;)[A-Z-]+:/S', array($this, 'strtolowerCallback'), $body);
 
         return $body;
     }
@@ -702,10 +703,10 @@ class Minifier
         $namespaces = '';
         
         // Remove spaces before the things that should not have spaces before them.
-        $css = preg_replace('/ ([@{};>+)\]~=,])/S', '$1', $css);
+        $css = preg_replace('/ ([@{};>+)\]~=,\/\n])/S', '$1', $css);
 
         // Remove the spaces after the things that should not have spaces after them.
-        $css = preg_replace('/([{}:;>+(\[~=,]) /S', '$1', $css);
+        $css = preg_replace('/([{}:;>+(\[~=,\/\n]) /S', '$1', $css);
         
         // Shorten shortable double colon (CSS3) pseudo-elements to single colon (CSS2)
         $css = preg_replace('/::(before|after|first-(?:line|letter))(\{|,)/Si', ':$1$2', $css);
@@ -720,39 +721,38 @@ class Minifier
         $css = preg_replace('/\(([a-z-]+):([0-9]+)\/([0-9]+)\)/Si', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
 
         // Remove empty rule blocks up to 3 levels deep.
-        $css = preg_replace(array_fill(0, 3, '/[^{};\/]+\{\}/S'), '', $css);
+        $css = preg_replace(array_fill(0, 3, '/[^{};\/\n]+\{\}/S'), '', $css);
+
+        // Two important comments next to each other? Remove extra newline.
+        if ($this->keepImportantComments) {
+            $css = str_replace("\n\n", "\n", $css);
+        }
         
         // Restore fraction
         $css = str_replace(self::QUERY_FRACTION, '/', $css);
 
         // Lowercase some popular @directives
         $css = preg_replace_callback(
-            '/(?<!\\\\)@(charset|document|font-face|import|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|' .
+            '/(?<!\\\\)@(?:charset|document|font-face|import|(?:-(?:atsc|khtml|moz|ms|o|wap|webkit)-)?keyframes|media|'.
             'namespace|page|supports|viewport)/Si',
-            function ($matches) {
-                return '@'. strtolower($matches[1]);
-            },
+            array($this, 'strtolowerCallback'),
             $css
         );
 
         // Lowercase some popular media types
         $css = preg_replace_callback(
             '/[ ,](?:all|aural|braille|handheld|print|projection|screen|tty|tv|embossed|speech)[ ,;{]/Si',
-            function ($matches) {
-                return strtolower($matches[0]);
-            },
+            array($this, 'strtolowerCallback'),
             $css
         );
 
         // Lowercase some common pseudo-classes & pseudo-elements
         $css = preg_replace_callback(
-            '/(?<!\\\\):(active|after|before|checked|default|disabled|empty|enabled|first-(?:child|of-type)|'.
+            '/(?<!\\\\):(?:active|after|before|checked|default|disabled|empty|enabled|first-(?:child|of-type)|'.
             'focus(?:-within)?|hover|indeterminate|in-range|invalid|lang\(|last-(?:child|of-type)|left|link|not\(|'.
             'nth-(?:child|of-type)\(|nth-last-(?:child|of-type)\(|only-(?:child|of-type)|optional|out-of-range|'.
             'read-(?:only|write)|required|right|root|:selection|target|valid|visited)/Si',
-            function ($matches) {
-                return ':'. strtolower($matches[1]);
-            },
+            array($this, 'strtolowerCallback'),
             $css
         );
         
@@ -847,5 +847,15 @@ class Minifier
     private function shortenNamedColorsCallback($matches)
     {
         return $matches[1] . $this->namedToHexColorsMap[strtolower($matches[2])] . $matches[3];
+    }
+
+    /**
+     * Makes a string lowercase
+     * @param array $matches
+     * @return string
+     */
+    private function strtolowerCallback($matches)
+    {
+        return strtolower($matches[0]);
     }
 }
