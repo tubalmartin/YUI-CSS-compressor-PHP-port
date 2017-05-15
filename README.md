@@ -168,7 +168,7 @@ test runner that displays inline coloured diffs for a failing test. Only one tes
 Here's how to use it:
 
 ```
-./tests/bin/runner -t <expectation-name> [-f <fixture-name>] [--keep-sourcemap] [--linebreak-position <pos>]
+./tests/bin/runner -t <expectation-name> [-f <fixture-name>] [--keep-sourcemap] [--remove-important-comments] [--linebreak-position <pos>]
 ```
 
 <a name="api"></a>
