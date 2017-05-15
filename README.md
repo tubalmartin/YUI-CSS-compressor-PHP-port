@@ -311,11 +311,6 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
-### v4.0.0 13 May 2017
-
-Same behavior of v3.3.0 but `setChunkLength` method and `--chunk-length` CLI argument removed from public API.
-Read v3.3.0 changelog entry for more details.
-
 ### v3.3.0 13 May 2017
 
 NEW:
