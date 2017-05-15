@@ -7,7 +7,10 @@ use tubalmartin\CssMin\Minifier;
 use tubalmartin\CssMin\Tests\FineDiff\Render\Cli as CliRenderer;
 use cogpowered\FineDiff\Diff;
 
-$opts = getopt('t:f:', array('keep-sourcemap', 'linebreak-position:'));
+$opts = getopt(
+    't:f:',
+    array('keep-sourcemap', 'keep-sourcemap-comment', 'remove-important-comments', 'linebreak-position:')
+);
 
 if (empty($opts['t'])) {
     fwrite(
@@ -37,8 +40,12 @@ if (!is_readable($fixtureFile) || !is_readable($expectationFile)) {
 
 $minifier = new Minifier;
 
-if (isset($opts['keep-sourcemap'])) {
-    $minifier->keepSourceMap();
+if (isset($opts['keep-sourcemap']) || isset($opts['keep-sourcemap-comment'])) {
+    $minifier->keepSourceMapComment();
+}
+
+if (isset($opts['remove-important-comments'])) {
+    $minifier->removeImportantComments();
 }
 
 if (!empty($opts['linebreak-position'])) {
