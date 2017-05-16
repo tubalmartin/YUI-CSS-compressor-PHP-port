@@ -332,6 +332,10 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v3.3.1 16 May 2017
+
+* Backported performance improvements made in v4.1.0
+
 ### v3.3.0 13 May 2017
 
 NEW:

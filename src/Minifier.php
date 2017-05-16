@@ -346,7 +346,7 @@ class Minifier
         $css = str_replace('*/ ', '*/', $css);
 
         // Restore preserved rule bodies before splitting
-        $css = str_replace(array_keys($this->ruleBodies), array_values($this->ruleBodies), $css);
+        $css = strtr($css, $this->ruleBodies);
 
         // Restore new lines for /*! important comments
         $css = str_replace(self::NL, "\n", $css);
@@ -369,7 +369,7 @@ class Minifier
         }
 
         // Restore preserved comments and strings
-        $css = str_replace(array_keys($this->preservedTokens), array_values($this->preservedTokens), $css);
+        $css = strtr($css, $this->preservedTokens);
 
         return trim($css);
     }
@@ -455,7 +455,7 @@ class Minifier
         // maybe the string contains a comment-like substring?
         // one, maybe more? put'em back then
         if (strpos($match, self::COMMENT_TOKEN_START) !== false) {
-            $match = str_replace(array_keys($this->comments), array_values($this->comments), $match);
+            $match = strtr($match, $this->comments);
         }
 
         // minify alpha opacity in filter strings
@@ -728,8 +728,9 @@ class Minifier
         // Add token to add the "/" back in later
         $css = preg_replace('/\(([a-z-]+):([0-9]+)\/([0-9]+)\)/Si', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
 
-        // Remove empty rule blocks up to 3 levels deep.
-        $css = preg_replace(array_fill(0, 3, '/[^{};\/]+\{\}/S'), '', $css);
+        // Remove empty rule blocks up to 2 levels deep.
+        $css = preg_replace(array_fill(0, 2, '/(\{)[^{};\/]+\{\}/S'), '$1', $css);
+        $css = preg_replace('/[^{};\/]+\{\}/S', '', $css);
         
         // Restore fraction
         $css = str_replace(self::QUERY_FRACTION, '/', $css);
