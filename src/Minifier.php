@@ -339,7 +339,7 @@ class Minifier
         $css = $this->processAtRulesAndSelectors($css);
 
         // Restore preserved rule bodies before splitting
-        $css = str_replace(array_keys($this->ruleBodies), array_values($this->ruleBodies), $css);
+        $css = strtr($css, $this->ruleBodies);
 
         // Some source control tools don't like it when files containing lines longer
         // than, say 8000 characters, are checked in. The linebreak option is used in
@@ -359,7 +359,7 @@ class Minifier
         }
 
         // Restore preserved comments and strings
-        $css = str_replace(array_keys($this->preservedTokens), array_values($this->preservedTokens), $css);
+        $css = strtr($css, $this->preservedTokens);
 
         return trim($css);
     }
@@ -445,7 +445,7 @@ class Minifier
         // maybe the string contains a comment-like substring?
         // one, maybe more? put'em back then
         if (strpos($match, self::COMMENT_TOKEN_START) !== false) {
-            $match = str_replace(array_keys($this->comments), array_values($this->comments), $match);
+            $match = strtr($match, $this->comments);
         }
 
         // minify alpha opacity in filter strings
@@ -462,13 +462,14 @@ class Minifier
     private function processComments($css)
     {
         foreach ($this->comments as $commentId => $comment) {
+            $commentIdString = '/*'. $commentId .'*/';
+            
             // ! in the first position of the comment means preserve
             // so push to the preserved tokens keeping the !
             if ($this->keepImportantComments && strpos($comment, '!') === 0) {
                 $preservedTokenId = $this->registerPreservedToken($comment);
-                $css = str_replace($commentId, $preservedTokenId, $css);
                 // Put new lines before and after /*! important comments
-                $css = preg_replace('/\/\*'. $preservedTokenId .'\*\//', "\n$0\n", $css, 1);
+                $css = str_replace($commentIdString, "\n/*$preservedTokenId*/\n", $css);
                 continue;
             }
 
@@ -476,9 +477,8 @@ class Minifier
             // so push to the preserved tokens if {$this->keepSourceMapComment} is truthy.
             if ($this->keepSourceMapComment && strpos($comment, '# sourceMappingURL=') === 0) {
                 $preservedTokenId = $this->registerPreservedToken($comment);
-                $css = str_replace($commentId, $preservedTokenId, $css);
                 // Add new line before the sourcemap comment
-                $css = preg_replace('/\/\*'. $preservedTokenId .'/', "\n$0", $css, 1);
+                $css = str_replace($commentIdString, "\n/*$preservedTokenId*/", $css);
                 continue;
             }
 
@@ -490,7 +490,7 @@ class Minifier
             }
 
             // in all other cases kill the comment
-            $css = str_replace('/*'. $commentId .'*/', '', $css);
+            $css = str_replace($commentIdString, '', $css);
         }
 
         // Normalize whitespace again
@@ -558,7 +558,7 @@ class Minifier
 
         // Remove important comments inside a rule body (because they make no sense here).
         if (strpos($body, '/*') !== false) {
-            $body = preg_replace('/\n?\/\*[A-Z0-9_]+\*\/\n?/', '', $body);
+            $body = preg_replace('/\n?\/\*[A-Z0-9_]+\*\/\n?/S', '', $body);
         }
         
         // Empty rule body? Exit :)
@@ -720,8 +720,9 @@ class Minifier
         // Add token to add the "/" back in later
         $css = preg_replace('/\(([a-z-]+):([0-9]+)\/([0-9]+)\)/Si', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
 
-        // Remove empty rule blocks up to 3 levels deep.
-        $css = preg_replace(array_fill(0, 3, '/[^{};\/\n]+\{\}/S'), '', $css);
+        // Remove empty rule blocks up to 2 levels deep.
+        $css = preg_replace(array_fill(0, 2, '/(\{)[^{};\/\n]+\{\}/S'), '$1', $css);
+        $css = preg_replace('/[^{};\/\n]+\{\}/S', '', $css);
 
         // Two important comments next to each other? Remove extra newline.
         if ($this->keepImportantComments) {

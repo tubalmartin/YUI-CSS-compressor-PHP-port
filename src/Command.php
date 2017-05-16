@@ -23,6 +23,7 @@ class Command
                 'help',
                 'input:',
                 'output:',
+                'dry-run',
                 'keep-sourcemap',
                 'keep-sourcemap-comment',
                 'linebreak-position:',
@@ -36,6 +37,7 @@ class Command
         $help = $this->getOpt(array('h', 'help'), $opts);
         $input = $this->getOpt(array('i', 'input'), $opts);
         $output = $this->getOpt(array('o', 'output'), $opts);
+        $dryrun = $this->getOpt('dry-run', $opts);
         $keepSourceMapComment = $this->getOpt(array('keep-sourcemap', 'keep-sourcemap-comment'), $opts);
         $linebreakPosition = $this->getOpt('linebreak-position', $opts);
         $memoryLimit = $this->getOpt('memory-limit', $opts);
@@ -101,6 +103,11 @@ class Command
         $this->setStat('compression-time-end', microtime(true));
         $this->setStat('peak-memory-usage', memory_get_peak_usage(true));
         $this->setStat('compressed-size', strlen($css));
+        
+        if (!is_null($dryrun)) {
+            $this->showStats();
+            die(self::SUCCESS_EXIT);
+        }
 
         if (is_null($output)) {
             fwrite(STDOUT, $css . PHP_EOL);
@@ -203,6 +210,7 @@ Usage: cssmin [options] -i <file> [-o <file>]
 Options:
     
   -h|--help                      Prints this usage information.
+  --dry-run                      Performs a dry run displaying statistics.
   --keep-sourcemap[-comment]     Keeps the sourcemap special comment in the output.
   --linebreak-position <pos>     Splits long lines after a specific column in the output.
   --memory-limit <limit>         Sets the memory limit for this script.

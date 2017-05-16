@@ -32,4 +32,8 @@ a[href$="/test/"] span.test{}
             /* empty */
         }
     }
+    /*! imp: weird but it may happen */
+    b{
+        
+    }
 }

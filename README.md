@@ -264,6 +264,15 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v4.1.0 16 May 2017
+
+* NEW:
+  * `--dry-run` CLI argument to perform a dry run and display statistics.
+* IMPROVED:
+  * Performance: 2x times faster than v4.0.0 after code profiling:
+    * A 1MB file takes 1.8s with PHP 5.3.29 and 350ms with PHP 7.0.18 (on average).
+    * A full Bootstrap v3.3.7 CSS suite takes 330ms with PHP 5.3.29 and 50ms with PHP 7.0.18 (on average).
+
 ### v4.0.0 15 May 2017
 
 NEW:
