@@ -283,6 +283,10 @@ NEW:
   * Added: `removeImportantComments()` method & `--keep-important-comments` CLI argument.
 * Important comments `/*! ... */` can be optionally removed from output too calling `removeImportantComments()` method.
 
+### v3.3.1 16 May 2017
+
+* Backported performance improvements made in v4.1.0
+
 ### v3.3.0 13 May 2017
 
 NEW:
