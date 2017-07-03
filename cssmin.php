@@ -429,7 +429,7 @@ class CSSmin
         $max_index = strlen($css) - 1;
         $append_index = $index = $last_index = $offset = 0;
         $sb = array();
-        $pattern = '/url\(\s*(["\']?)data\:/i';
+        $pattern = '/url\(\s*(["\']?)data\:(?!image\/svg)/i';
 
         // Since we need to account for non-base64 data urls, we need to handle
         // ' and ) being part of the data string. Hence switching to indexOf,
