@@ -258,7 +258,7 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 * [Minify](https://github.com/mrclay/minify) Minify is an HTTP content server. It compresses sources of content (usually files), combines the result and serves it with appropriate HTTP headers.
 * [Autoptimize](http://wordpress.org/plugins/autoptimize/) is a Wordpress plugin. Autoptimize speeds up your website and helps you save bandwidth by aggregating and minimizing JS, CSS and HTML.
 * [IMPRESSPAGES](http://www.impresspages.org/) PHP framework with content editor.
-* Other dependent Composer packages.
+* [Other dependent Composer packages](https://packagist.org/packages/tubalmartin/cssmin/dependents).
 
 <a name="changelog"></a>
 
