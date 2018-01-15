@@ -204,3 +204,6 @@ only screen and (min-device-pixel-ratio: 1.5) {
     0% { transform: rotate3d(0,0,1,30deg); }
     100% { transform: rotate3d(0,0,1,10deg); }
 }
+@import url(//example.org/foo.css?a;b;c;d) screen, projection;
+@import url(//example.org/foo.css?a;b;c;d);
+@import url(//example.org/bar.css);

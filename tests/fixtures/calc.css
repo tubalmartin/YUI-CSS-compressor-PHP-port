@@ -10,3 +10,8 @@
     padding-top: calc( 5 * (2em + -1px));
 }
 input { width: CALC(100% - (1em*1.5)); }
+p {
+    font-size: -webkit-calc(20px  + 1vw);
+    font-size: -moz-calc(20px + 1vw);
+    font-size: calc(20px + 1vw);
+}

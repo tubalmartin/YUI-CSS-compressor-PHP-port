@@ -328,6 +328,13 @@ class Minifier
 
         // Normalize all whitespace strings to single spaces. Easier to work with that way.
         $css = preg_replace('/\s+/S', ' ', $css);
+
+        // Process import At-rules with unquoted URLs so URI reserved characters such as a semicolon may be used safely.
+        $css = preg_replace_callback(
+            '/@import url\(([^\'"]+?)\)( |;)/Si',
+            array($this, 'processImportUnquotedUrlAtRulesCallback'),
+            $css
+        );
         
         // Process comments
         $css = $this->processComments($css);
@@ -341,22 +348,8 @@ class Minifier
         // Restore preserved rule bodies before splitting
         $css = strtr($css, $this->ruleBodies);
 
-        // Some source control tools don't like it when files containing lines longer
-        // than, say 8000 characters, are checked in. The linebreak option is used in
-        // that case to split long lines after a specific column.
-        if ($this->linebreakPosition > 0) {
-            $l = strlen($css);
-            $offset = $this->linebreakPosition;
-            while (preg_match('/(?<!\\\\)\}(?!\n)/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
-                $matchIndex = $matches[0][1];
-                $css = substr_replace($css, "\n", $matchIndex + 1, 0);
-                $offset = $matchIndex + 2 + $this->linebreakPosition;
-                $l += 1;
-                if ($offset > $l) {
-                    break;
-                }
-            }
-        }
+        // Split long lines in output if required
+        $css = $this->processLongLineSplitting($css);
 
         // Restore preserved comments and strings
         $css = strtr($css, $this->preservedTokens);
@@ -452,6 +445,17 @@ class Minifier
         $match = str_ireplace('progid:DXImageTransform.Microsoft.Alpha(Opacity=', 'alpha(opacity=', $match);
 
         return $quote . $this->registerPreservedToken($match) . $quote;
+    }
+
+    /**
+     * Searches & replaces all import at-rule unquoted urls with tokens so URI reserved characters such as a semicolon
+     * may be used safely in a URL.
+     * @param array $matches
+     * @return string
+     */
+    private function processImportUnquotedUrlAtRulesCallback($matches)
+    {
+        return '@import url('. $this->registerPreservedToken($matches[1]) .')'. $matches[2];
     }
 
     /**
@@ -786,6 +790,35 @@ class Minifier
         // 2. @imports below @charset
         // 3. @namespaces below @imports
         $css = $charset . $imports . $namespaces . $css;
+
+        return $css;
+    }
+
+    /**
+     * Splits long lines after a specific column.
+     *
+     * Some source control tools don't like it when files containing lines longer
+     * than, say 8000 characters, are checked in. The linebreak option is used in
+     * that case to split long lines after a specific column.
+     *
+     * @param string $css the whole stylesheet.
+     * @return string
+     */
+    private function processLongLineSplitting($css)
+    {
+        if ($this->linebreakPosition > 0) {
+            $l = strlen($css);
+            $offset = $this->linebreakPosition;
+            while (preg_match('/(?<!\\\\)\}(?!\n)/S', $css, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+                $matchIndex = $matches[0][1];
+                $css = substr_replace($css, "\n", $matchIndex + 1, 0);
+                $offset = $matchIndex + 2 + $this->linebreakPosition;
+                $l += 1;
+                if ($offset > $l) {
+                    break;
+                }
+            }
+        }
 
         return $css;
     }

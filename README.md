@@ -264,6 +264,11 @@ Values & notes: [pcre.recursion_limit documentation](http://php.net/manual/en/pc
 
 ## 6. Changelog
 
+### v4.1.1 15 Jan 2018
+
+FIXED:
+* Breakage when minifying at-import rule with unquoted urls containing semicolons [#45](https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port/issues/45)
+
 ### v4.1.0 16 May 2017
 
 * NEW:
