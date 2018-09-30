@@ -309,4 +309,8 @@ class MinifierTest extends PHPUnit_Framework_TestCase
         $this->execTest('pure');
     }
 
+    public function testUnclosedCurlyBrace()
+    {
+        $this->execTest('unclosed-curly-brace');
+    }
 }
