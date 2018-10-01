@@ -172,6 +172,11 @@ class MinifierTest extends PHPUnit_Framework_TestCase
         $this->execTest('font-weight');
     }
 
+    public function testFontFamilyColor()
+    {
+        $this->execTest('font-family-color');
+    }
+
     public function testImportantRule()
     {
         $this->execTest('important');
