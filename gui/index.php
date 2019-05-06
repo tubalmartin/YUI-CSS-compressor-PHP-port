@@ -33,7 +33,6 @@ function stripslashes_deep($value)
 
 // Disable magic quotes at runtime.
 if (function_exists('ini_set')) {
-    ini_set('magic_quotes_sybase', 0);
     ini_set('get_magic_quotes_runtime', 0);
 }
 
@@ -45,7 +44,7 @@ if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
 
 if (!empty($_POST)) :
     // Form options
-    parse_str($_POST['options']);
+    parse_str($_POST['options'], $result);
 
     $linebreak_pos = trim($linebreak_pos) !== '' ? $linebreak_pos : false;
     $raise_php = isset($raise_php) ? true : false;
