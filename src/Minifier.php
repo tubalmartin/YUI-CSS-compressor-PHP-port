@@ -22,6 +22,8 @@
 
 namespace tubalmartin\CssMin;
 
+use InvalidArgumentException;
+
 class Minifier
 {
     const QUERY_FRACTION = '_CSSMIN_QF_';
@@ -507,6 +509,7 @@ class Minifier
      * Finds, minifies & preserves all rule bodies.
      * @param string $css the whole stylesheet.
      * @return string
+     * @throws InvalidArgumentException if $css contains an unclosed block
      */
     private function processRuleBodies($css)
     {
@@ -515,6 +518,9 @@ class Minifier
 
         while (($blockStartPos = strpos($css, '{', $searchOffset)) !== false) {
             $blockEndPos = strpos($css, '}', $blockStartPos);
+            if ($blockEndPos === false) {
+                throw new InvalidArgumentException("No end to CSS block starting at offset $blockStartPos");
+            }
             $nextBlockStartPos = strpos($css, '{', $blockStartPos + 1);
             $ret .= substr($css, $substrOffset, $blockStartPos - $substrOffset);
 
