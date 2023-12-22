@@ -301,14 +301,14 @@ class Minifier
         $css = preg_replace_callback(
             '/(?<!\\\\)\/\*(.*?)\*(?<!\\\\)\//Ss',
             array($this, 'processCommentsCallback'),
-            $css
+            (string) $css
         );
 
         // IE7: Process Microsoft matrix filters (whitespaces between Matrix parameters). Can contain strings inside.
         $css = preg_replace_callback(
             '/filter:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^)]+)\)/Ss',
             array($this, 'processOldIeSpecificMatrixDefinitionCallback'),
-            $css
+            (string) $css
         );
 
         // Process quoted unquotable attribute selectors to unquote them. Covers most common cases.
@@ -316,24 +316,24 @@ class Minifier
         $css = preg_replace(
             '/\[\s*([a-z][a-z-]+)\s*([\*\|\^\$~]?=)\s*[\'"](-?[a-z_][a-z0-9-_]+)[\'"]\s*\]/Ssi',
             '[$1$2$3]',
-            $css
+            (string) $css
         );
 
         // Process strings so their content doesn't get accidentally minified
         $css = preg_replace_callback(
             '/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S",
             array($this, 'processStringsCallback'),
-            $css
+            (string) $css
         );
 
         // Normalize all whitespace strings to single spaces. Easier to work with that way.
-        $css = preg_replace('/\s+/S', ' ', $css);
+        $css = preg_replace('/\s+/S', ' ', (string) $css);
 
         // Process import At-rules with unquoted URLs so URI reserved characters such as a semicolon may be used safely.
         $css = preg_replace_callback(
             '/@import url\(([^\'"]+?)\)( |;)/Si',
             array($this, 'processImportUnquotedUrlAtRulesCallback'),
-            $css
+            (string) $css
         );
         
         // Process comments
